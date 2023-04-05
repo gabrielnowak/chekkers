@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "YuWI8wXdDfDU7oym+Xl7ZdJjduk7zac2SjAEOAigvrAS+qs8TGMVbJPcMc5e9L6aLFXe2sgSR1elleyVVj+L1Q==",
+  "dgSpecHash": "ozoxmCacg7qLIGs5m6a1Y3QhE5l67ZtjdJufnkln8tmkLpWwTq3S/xOk8xSnKl24Sej1QeAEMGFd0GdqndmBNg==",
   "success": true,
-  "projectFilePath": "D:\\studia\\sztuczna-inteligencja\\Chekkers\\Chekkers.csproj",
+  "projectFilePath": "C:\\studia\\sztuczna-inteligencja\\chekkers\\Chekkers.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }
