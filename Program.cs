@@ -1,6 +1,8 @@
 ﻿using Raylib_cs;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.Design;
 using System.Drawing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -11,7 +13,11 @@ namespace Chekkers
 
     static class Program
     {
-        public static int beatingCounter;
+        static List<Tuple<int, int>> beatings = new List<Tuple<int, int>>();//przechowuje liste bic dla konkretnego pionka
+        static List<Tuple<int, int>> piecesToRemove = new List<Tuple<int, int>>();//dla konkretnego pola zwracana jest lista pol do wykasowania przy biciu na to pole (wszystkie pionki napotkane po drodze)
+        public static int maxBeatings=0;
+
+        //public static int beatingCounter;
         public static void prepareBoard(int[,] board)
         {
             //0 - pusta plansza , 1 - pion bialy, 2 - pion czarny , 3 - damka biala , 4 - damka czarna
@@ -77,7 +83,59 @@ namespace Chekkers
             return Tuple.Create((int)mousePosition.Y/cellSize, (int)mousePosition.X/cellSize);
         }
 
-        public static bool beatingAvaliable(Tuple<int, int> pieceClicked, int [,] board, int opponent)
+        public static void searchPieces(Tuple<int, int> start, Tuple<int, int> destination, Tuple<int, int> prevPos, int[,] board, int opponent)
+        {
+            Console.WriteLine("tttt");
+            int x = start.Item2;
+            int y = start.Item1;
+            if (x == destination.Item2 && y == destination.Item1)
+            {
+                Console.WriteLine("xxxxxxxxxx  "+piecesToRemove.Count);
+                foreach (var piece in piecesToRemove)
+                {
+                    board[piece.Item1, piece.Item2] = 0;
+                }
+            }
+            if (x - 2 >= 0 && y - 2 >= 0 && board[y - 2, x - 2] == 0 && opponent == board[y - 1, x - 1] && (prevPos.Item2 != x - 2 || prevPos.Item1 != y - 2))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
+            {
+                Tuple<int, int> pieceToRemove = new Tuple<int, int>(y - 1, x - 1);
+                piecesToRemove.Add(pieceToRemove);
+                Console.WriteLine("xxxxxxxxxxxxxxxx1");
+                Tuple<int, int> nextMove = new Tuple<int, int>(y - 2, x - 2);
+                Console.WriteLine(nextMove.Item2+" "+nextMove.Item1);
+                searchPieces(nextMove, destination, start, board, opponent);
+                piecesToRemove.RemoveAt(piecesToRemove.Count - 1);
+            }
+            if (x - 2 >= 0 && y + 2 < board.GetLength(0) && board[y + 2, x - 2] == 0 && opponent == board[y + 1, x - 1] && (prevPos.Item2 != x - 2 || prevPos.Item1 != y + 2))
+            {
+                
+                Tuple<int, int> pieceToRemove = new Tuple<int, int>(y + 1, x - 1);
+                piecesToRemove.Add(pieceToRemove);
+                Console.WriteLine("xxxxxxxxxxxxxxxx2");
+                Tuple<int, int> nextMove = new Tuple<int, int>(y +2 , x - 2);
+                searchPieces(nextMove, destination, start, board, opponent);
+                piecesToRemove.RemoveAt(piecesToRemove.Count - 1);
+            }
+            if (x + 2 < board.GetLength(0) && y - 2 >= 0 && board[y - 2, x + 2] == 0 && opponent == board[y - 1, x + 1] && (prevPos.Item2 != x + 2 || prevPos.Item1 != y - 2))
+            {
+                Tuple<int, int> pieceToRemove = new Tuple<int, int>(y - 1, x + 1);
+                piecesToRemove.Add(pieceToRemove);
+                Console.WriteLine("xxxxxxxxxxxxxxxx3");
+                Tuple<int, int> nextMove = new Tuple<int, int>(y - 2 , x + 2);
+                searchPieces(nextMove, destination, start, board, opponent);
+            }
+            if (x + 2 < board.GetLength(0) && y + 2 < board.GetLength(1) && board[y + 2, x + 2] == 0 && opponent == board[y + 1, x + 1] && (prevPos.Item2 != x + 2 || prevPos.Item1 != y + 2))
+            {
+                Tuple<int, int> pieceToRemove = new Tuple<int, int>(y + 1, x + 1);
+                piecesToRemove.Add(pieceToRemove);
+                Console.WriteLine("xxxxxxxxxxxxxxxx4");
+                Tuple<int, int> nextMove = new Tuple<int, int>(y + 2, x + 2);
+                searchPieces(nextMove, destination, start, board, opponent);
+                piecesToRemove.RemoveAt(piecesToRemove.Count - 1);
+            }
+
+        }
+         public static bool beatingAvaliable(Tuple<int, int> pieceClicked, int [,] board, int opponent)
         {
             int x = pieceClicked.Item2;
             int y = pieceClicked.Item1;
@@ -91,6 +149,103 @@ namespace Chekkers
                     return true;
 
             return false;
+        }
+        public static void getBeatingsV2(Tuple<int, int> pieceClicked, int[,] board, int opponent, int length, Tuple<int, int> prevPos)
+        {
+            int x = pieceClicked.Item2;
+            int y = pieceClicked.Item1;
+            //List<Tuple<int, int>> beatings = new List<Tuple<int, int>>();
+            if (x - 2 >= 0 && y - 2 >= 0 && board[y - 2, x - 2] == 0 && opponent == board[y - 1, x - 1] && (prevPos.Item2!=x-2 || prevPos.Item1!=y-2))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
+            {
+                Tuple<int, int> legalBeating = new Tuple<int, int>(y - 2, x - 2);
+                Tuple<int, int> pieceToRemove = new Tuple<int, int>(y - 1, x - 1);
+                if (length + 1 > maxBeatings)
+                {
+                    maxBeatings = length + 1;
+                    //if (beatings.Count > 0)
+                        beatings.Clear();
+                    
+                    beatings.Add(legalBeating);
+
+                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
+                }
+                else if(length + 1 == maxBeatings)
+                {
+                   
+                    beatings.Add(legalBeating);
+                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
+                }
+                else if(length + 1 < maxBeatings)
+                {
+                   
+                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
+                }
+            }
+
+            if (x - 2 >= 0 && y + 2 < board.GetLength(0) && board[y + 2, x - 2] == 0 && opponent == board[y + 1, x - 1] && (prevPos.Item2 != x-2 || prevPos.Item1 != y+2))
+            {
+                Tuple<int, int> legalBeating = new Tuple<int, int>(y + 2, x - 2);
+                
+                if (length + 1 > maxBeatings)
+                {
+                    maxBeatings = length + 1;
+                    //if(beatings.Count>0)
+                        beatings.Clear();
+                    beatings.Add(legalBeating);
+                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
+                }
+                else if (length + 1 == maxBeatings)
+                {
+                    beatings.Add(legalBeating);
+                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
+                }
+                else if (length + 1 < maxBeatings)
+                {
+                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
+                }
+            }
+            if (x + 2 < board.GetLength(0) && y - 2 >= 0 && board[y - 2, x + 2] == 0 && opponent == board[y - 1, x + 1] && (prevPos.Item2 != x+2 || prevPos.Item1 != y-2))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
+            {
+                Tuple<int, int> legalBeating = new Tuple<int, int>(y - 2, x + 2);
+                if (length + 1 > maxBeatings)
+                {
+                    maxBeatings = length + 1;
+                    //if (beatings.Count > 0)
+                        beatings.Clear();
+                    beatings.Add(legalBeating);
+                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
+                }
+                else if (length + 1 == maxBeatings)
+                {
+                    beatings.Add(legalBeating);
+                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
+                }
+                else if (length + 1 < maxBeatings)
+                {
+                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
+                }
+            }
+            if (x + 2 < board.GetLength(0) && y + 2 < board.GetLength(1) && board[y + 2, x + 2] == 0 && opponent == board[y + 1, x + 1] && (prevPos.Item2 != x+2 || prevPos.Item1 != y+2))
+            {
+                Tuple<int, int> legalBeating = new Tuple<int, int>(y + 2, x + 2);
+                if (length + 1 > maxBeatings)
+                {
+                    maxBeatings = length + 1;
+                    //if (beatings.Count > 0) 
+                        beatings.Clear();
+                    beatings.Add(legalBeating);
+                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
+                }
+                else if (length + 1 == maxBeatings)
+                {
+                    beatings.Add(legalBeating);
+                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
+                }
+                else if (length + 1 < maxBeatings)
+                {
+                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
+                }
+            }
         }
         public static List<Tuple<int, int>> getBeatings(Tuple<int, int> pieceClicked, int[,] board, int opponent)
         {
@@ -205,9 +360,12 @@ namespace Chekkers
                 //obsluga bicia bialego
                 if (beatingAvaliable(pieceClicked, board, 2))
                 {
-                    beatingCounter = 1;
-                    moves = getBeatings(pieceClicked, board, 2);
-                    Console.WriteLine("test");
+                    //beatingCounter = 1;
+                    beatings.Clear();
+                    maxBeatings = 0;
+                    getBeatingsV2(pieceClicked, board, 2, 0, pieceClicked);
+                    moves = beatings;
+                    Console.WriteLine(maxBeatings);
                 }
                 //obsluga ruchow bialego pionka - tylko jesli nie ma bicia (dlatego else)
 
@@ -239,9 +397,13 @@ namespace Chekkers
             {
                 if (beatingAvaliable(pieceClicked, board, 1))
                 {
-                    beatingCounter = 1;
-                    moves = getBeatings(pieceClicked, board, 1);
-                    Console.WriteLine("test");
+                    //beatingCounter = 1;
+                    beatings.Clear();
+                    maxBeatings = 0;
+                    getBeatingsV2(pieceClicked, board, 1,0, pieceClicked);
+                    moves = beatings;
+                    
+                    Console.WriteLine(maxBeatings);
                 }
                 //obsluga ruchow czarnego pionka
                 else
@@ -355,13 +517,19 @@ namespace Chekkers
                             Raylib.DrawCircleV(mousePosition, cellSize / 2, Color.RED);
                             if (pieceChoosen && moves.Contains(cellClicked))//wykonaj ruch
                             {
-                                if(Math.Abs(cellClicked.Item1 - pieceClicked.Item1)>1 && Math.Abs(cellClicked.Item2 - pieceClicked.Item2) > 1) //mamy bicie
+                                if(beatings.Contains(cellClicked)) //mamy bicie - DO POPRAWY - nie uwzględnia wielokrotnych bić! napisać funkcję WRÓĆ (szukającą droge od cell clicked do piece clicked i zerującą wszystkie napotkane pionki po drodze)
                                 {
-                                    removePiece(pieceClicked, cellClicked, board);
+                                    piecesToRemove.Clear();
+                                    if(playerColor==2)
+                                        searchPieces(pieceClicked, cellClicked, pieceClicked, board, 1);
+                                    if (playerColor == 1)
+                                        searchPieces(pieceClicked, cellClicked, pieceClicked, board, 2);
+
+                                    //removePiece(pieceClicked, cellClicked, board);
                                     if (turn)
-                                        blackPieces--;
+                                        blackPieces-=maxBeatings;
                                     else
-                                        whitePieces--;
+                                        whitePieces-=maxBeatings;
                                     System.Console.WriteLine("pieces remaining: W" + whitePieces + " B" + blackPieces);
                                 }
                                 movePiece(pieceClicked.Item1, pieceClicked.Item2, cellClicked.Item1, cellClicked.Item2, board);

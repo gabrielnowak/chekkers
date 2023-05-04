@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <Reference Include="Raylib-cs">
-      <HintPath>..\..\..\Users\gbrln\Downloads\Raylib-cs-master\Raylib-cs-master\Raylib-cs\bin\Debug\net6.0\Raylib-cs.dll</HintPath>
+      <HintPath>C:\Users\gbrln\Downloads\Raylib-cs-master\Raylib-cs-master\Raylib-cs\bin\Debug\net6.0\Raylib-cs.dll</HintPath>
     </Reference>
   </ItemGroup>
 

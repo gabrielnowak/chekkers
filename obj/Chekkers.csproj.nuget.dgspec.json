@@ -1,24 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\studia\\sztuczna-inteligencja\\chekkers\\Chekkers.csproj": {}
+    "D:\\studia\\sztuczna-inteligencja\\Chekkers\\Chekkers.csproj": {}
   },
   "projects": {
-    "C:\\studia\\sztuczna-inteligencja\\chekkers\\Chekkers.csproj": {
+    "D:\\studia\\sztuczna-inteligencja\\Chekkers\\Chekkers.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\studia\\sztuczna-inteligencja\\chekkers\\Chekkers.csproj",
+        "projectUniqueName": "D:\\studia\\sztuczna-inteligencja\\Chekkers\\Chekkers.csproj",
         "projectName": "Chekkers",
-        "projectPath": "C:\\studia\\sztuczna-inteligencja\\chekkers\\Chekkers.csproj",
+        "projectPath": "D:\\studia\\sztuczna-inteligencja\\Chekkers\\Chekkers.csproj",
         "packagesPath": "C:\\Users\\gbrln\\.nuget\\packages\\",
-        "outputPath": "C:\\studia\\sztuczna-inteligencja\\chekkers\\obj\\",
+        "outputPath": "D:\\studia\\sztuczna-inteligencja\\Chekkers\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
           "C:\\Users\\gbrln\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -59,7 +55,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.202\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.201\\RuntimeIdentifierGraph.json"
         }
       }
     }
