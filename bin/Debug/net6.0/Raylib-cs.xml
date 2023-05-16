@@ -67,7 +67,10 @@
             <summary>Set window state: not minimized/maximized (only PLATFORM_DESKTOP)</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.SetWindowIcon(Raylib_cs.Image)">
-            <summary>Set icon for window (only PLATFORM_DESKTOP)</summary>
+            <summary>Set icon for window (single image, RGBA 32bit, only PLATFORM_DESKTOP)</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.SetWindowIcons(Raylib_cs.Image*,System.Int32)">
+            <summary>Set icon for window (multiple images, RGBA 32bit, only PLATFORM_DESKTOP)</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.SetWindowTitle(System.SByte*)">
             <summary>Set title for window (only PLATFORM_DESKTOP)</summary>
@@ -237,6 +240,9 @@
         <member name="M:Raylib_cs.Raylib.LoadShaderFromMemory(System.SByte*,System.SByte*)">
             <summary>Load shader from code strings and bind default locations</summary>
         </member>
+        <member name="M:Raylib_cs.Raylib.IsShaderReady(Raylib_cs.Shader)">
+            <summary>Check if a shader is ready</summary>
+        </member>
         <member name="M:Raylib_cs.Raylib.GetShaderLocation(Raylib_cs.Shader,System.SByte*)">
             <summary>Get shader uniform location</summary>
         </member>
@@ -253,7 +259,7 @@
             <summary>Set shader uniform value (matrix 4x4)</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.SetShaderValueTexture(Raylib_cs.Shader,System.Int32,Raylib_cs.Texture2D)">
-            <summary>Set shader uniform value for texture</summary>
+            <summary>Set shader uniform value for texture (sampler2d)</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.UnloadShader(Raylib_cs.Shader)">
             <summary>Unload shader from GPU memory (VRAM)</summary>
@@ -340,16 +346,16 @@
             <summary>Unload file data allocated by LoadFileData()</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.SaveFileData(System.SByte*,System.Void*,System.UInt32)">
-            <summary>Save data to file from byte array (write)</summary>
+            <summary>Save data to file from byte array (write), returns true on success</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.ExportDataAsCode(System.SByte*,System.UInt32,System.SByte*)">
+        <member name="M:Raylib_cs.Raylib.ExportDataAsCode(System.Byte*,System.UInt32,System.SByte*)">
             <summary>Export data to code (.h), returns true on success</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.IsFileExtension(System.SByte*,System.SByte*)">
-            <summary>Check file extension</summary>
+            <summary>Check file extension (including point: .png, .wav)</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetFileLength(System.SByte*)">
-            <summary> Get file length in bytes</summary>
+            <summary>Get file length in bytes</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetFileExtension(System.SByte*)">
             <summary>Get pointer to extension for a filename string (includes dot: '.png')</summary>
@@ -373,10 +379,13 @@
             <summary>Get the directory of the running application (uses static string)</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.LoadDirectoryFiles(System.SByte*,System.Int32*)">
-            <summary>Get filenames in a directory path (memory should be freed)</summary>
+            <summary>Load directory filepaths</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.LoadDirectoryFilesEx(System.SByte*,System.SByte*,Raylib_cs.CBool)">
+            <summary>Load directory filepaths with extension filtering and recursive directory scan</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.UnloadDirectoryFiles(Raylib_cs.FilePathList)">
-            <summary>Clear directory files paths buffers (free memory)</summary>
+            <summary>Unload filepaths</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.IsPathFile(System.SByte*)">
             <summary>Check if a given path is a file or a directory</summary>
@@ -388,25 +397,25 @@
             <summary>Check if a file has been dropped into window</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.LoadDroppedFiles">
-            <summary>Get dropped files names (memory should be freed)</summary>
+            <summary>Load dropped filepaths</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.UnloadDroppedFiles(Raylib_cs.FilePathList)">
-            <summary>Clear dropped files paths buffer (free memory)</summary>
+            <summary>Unload dropped filepaths</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetFileModTime(System.SByte*)">
             <summary>Get file modification time (last write time)</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.CompressData(System.Byte*,System.Int32,System.Int32*)">
-            <summary>Compress data (DEFLATE algorithm)</summary>
+            <summary>Compress data (DEFLATE algorithm), memory must be MemFree()</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.DecompressData(System.Byte*,System.Int32,System.Int32*)">
-            <summary>Decompress data (DEFLATE algorithm)</summary>
+            <summary>Decompress data (DEFLATE algorithm), memory must be MemFree()</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.EncodeDataBase64(System.Byte*,System.Int32,System.Int32*)">
-            <summary>Encode data to Base64 string</summary>
+            <summary>Encode data to Base64 string, memory must be MemFree()</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.DecodeDataBase64(System.Byte*,System.Int32*)">
-            <summary>Decode Base64 string data</summary>
+            <summary>Decode Base64 string data, memory must be MemFree()</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.OpenURL(System.SByte*)">
             <summary>Open URL with default system browser (if available)</summary>
@@ -427,10 +436,14 @@
             <summary>Set a custom key to exit program (default is ESC)</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetKeyPressed">
-            <summary>Get key pressed (keycode), call it multiple times for keys queued</summary>
+            <summary>
+            Get key pressed (keycode), call it multiple times for keys queued, returns 0 when the queue is empty
+            </summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetCharPressed">
-            <summary>Get char pressed (unicode), call it multiple times for chars queued</summary>
+            <summary>
+            Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty
+            </summary>
         </member>
         <member name="M:Raylib_cs.Raylib.IsGamepadAvailable(System.Int32)">
             <summary>Detect if a gamepad is available</summary>
@@ -523,13 +536,10 @@
             <summary>Enable a set of gestures using flags</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.IsGestureDetected(Raylib_cs.Gesture)">
-            <summary>Check if a gesture have been detected</summary>
+            <summary>Check if a gesture has been detected</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetGestureDetected">
             <summary>Get latest detected gesture</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.GetTouchPointsCount">
-            <summary>Get touch points count</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetGestureHoldDuration">
             <summary>Get gesture hold time in milliseconds</summary>
@@ -549,20 +559,11 @@
         <member name="M:Raylib_cs.Raylib.SetCameraMode(Raylib_cs.Camera3D,Raylib_cs.CameraMode)">
             <summary>Set camera mode (multiple camera modes available)</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.UpdateCamera(Raylib_cs.Camera3D*)">
+        <member name="M:Raylib_cs.Raylib.UpdateCamera(Raylib_cs.Camera3D*,Raylib_cs.CameraMode)">
             <summary>Update camera position for selected mode</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.SetCameraPanControl(Raylib_cs.KeyboardKey)">
-            <summary>Set camera pan key to combine with mouse movement (free camera)</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.SetCameraAltControl(Raylib_cs.KeyboardKey)">
-            <summary>Set camera alt key to combine with mouse movement (free camera)</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.SetCameraSmoothZoomControl(Raylib_cs.KeyboardKey)">
-            <summary>Set camera smooth zoom key to combine with mouse (free camera)</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.SetCameraMoveControls(Raylib_cs.KeyboardKey,Raylib_cs.KeyboardKey,Raylib_cs.KeyboardKey,Raylib_cs.KeyboardKey,Raylib_cs.KeyboardKey,Raylib_cs.KeyboardKey)">
-            <summary>Set camera move controls (1st person and 3rd person cameras)</summary>
+        <member name="M:Raylib_cs.Raylib.UpdateCameraPro(Raylib_cs.Camera3D*,System.Numerics.Vector3,System.Numerics.Vector3,System.Single)">
+            <summary>Update camera movement/rotation</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.SetShapesTexture(Raylib_cs.Texture2D,Raylib_cs.Rectangle)">
             <summary>
@@ -700,11 +701,18 @@
         <member name="M:Raylib_cs.Raylib.CheckCollisionPointTriangle(System.Numerics.Vector2,System.Numerics.Vector2,System.Numerics.Vector2,System.Numerics.Vector2)">
             <summary>Check if point is inside a triangle</summary>
         </member>
+        <member name="M:Raylib_cs.Raylib.CheckCollisionPointPoly(System.Numerics.Vector2,System.Numerics.Vector2*,System.Int32)">
+            <summary>Check if point is within a polygon described by array of vertices</summary>
+        </member>
         <member name="M:Raylib_cs.Raylib.CheckCollisionLines(System.Numerics.Vector2,System.Numerics.Vector2,System.Numerics.Vector2,System.Numerics.Vector2,System.Numerics.Vector2*)">
-            <summary>Check the collision between two lines defined by two points each, returns collision point by reference</summary>
+            <summary>
+            Check the collision between two lines defined by two points each, returns collision point by reference
+            </summary>
         </member>
         <member name="M:Raylib_cs.Raylib.CheckCollisionPointLine(System.Numerics.Vector2,System.Numerics.Vector2,System.Numerics.Vector2,System.Int32)">
-            <summary>Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]</summary>
+            <summary>
+            Check if point belongs to line created between two points [p1] and [p2] with defined margin in pixels [threshold]
+            </summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetCollisionRec(Raylib_cs.Rectangle,Raylib_cs.Rectangle)">
             <summary>Get collision rectangle for two rectangles collision</summary>
@@ -726,6 +734,9 @@
         </member>
         <member name="M:Raylib_cs.Raylib.LoadImageFromScreen">
             <summary>Load image from screen buffer and (screenshot)</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.IsImageReady(Raylib_cs.Image)">
+            <summary>Check if an image is ready</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.UnloadImage(Raylib_cs.Image)">
             <summary>Unload image from CPU memory (RAM)</summary>
@@ -754,8 +765,14 @@
         <member name="M:Raylib_cs.Raylib.GenImageWhiteNoise(System.Int32,System.Int32,System.Single)">
             <summary>Generate image: white noise</summary>
         </member>
+        <member name="M:Raylib_cs.Raylib.GenImagePerlinNoise(System.Int32,System.Int32,System.Int32,System.Int32,System.Single)">
+            <summary>Generate image: perlin noise</summary>
+        </member>
         <member name="M:Raylib_cs.Raylib.GenImageCellular(System.Int32,System.Int32,System.Int32)">
             <summary>Generate image: cellular algorithm, bigger tileSize means bigger cells</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.GenImageText(System.Int32,System.Int32,System.Int32)">
+            <summary>Generate image: grayscale image from text data</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.ImageCopy(Raylib_cs.Image)">
             <summary>Create an image duplicate (useful for transformations)</summary>
@@ -769,26 +786,29 @@
         <member name="M:Raylib_cs.Raylib.ImageTextEx(Raylib_cs.Font,System.SByte*,System.Single,System.Single,Raylib_cs.Color)">
             <summary>Create an image from text (custom sprite font)</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.ImageToPOT(Raylib_cs.Image*,Raylib_cs.Color)">
-            <summary>Convert image to POT (power-of-two)</summary>
-        </member>
         <member name="M:Raylib_cs.Raylib.ImageFormat(Raylib_cs.Image*,Raylib_cs.PixelFormat)">
             <summary>Convert image data to desired format</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.ImageAlphaMask(Raylib_cs.Image*,Raylib_cs.Image)">
-            <summary>Apply alpha mask to image</summary>
+        <member name="M:Raylib_cs.Raylib.ImageToPOT(Raylib_cs.Image*,Raylib_cs.Color)">
+            <summary>Convert image to POT (power-of-two)</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.ImageAlphaClear(Raylib_cs.Image*,Raylib_cs.Color,System.Single)">
-            <summary>Clear alpha channel to desired color</summary>
+        <member name="M:Raylib_cs.Raylib.ImageCrop(Raylib_cs.Image*,Raylib_cs.Rectangle)">
+            <summary>Crop an image to a defined rectangle</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.ImageAlphaCrop(Raylib_cs.Image*,System.Single)">
             <summary>Crop image depending on alpha value</summary>
         </member>
+        <member name="M:Raylib_cs.Raylib.ImageAlphaClear(Raylib_cs.Image*,Raylib_cs.Color,System.Single)">
+            <summary>Clear alpha channel to desired color</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.ImageAlphaMask(Raylib_cs.Image*,Raylib_cs.Image)">
+            <summary>Apply alpha mask to image</summary>
+        </member>
         <member name="M:Raylib_cs.Raylib.ImageAlphaPremultiply(Raylib_cs.Image*)">
             <summary>Premultiply alpha channel</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.ImageCrop(Raylib_cs.Image*,Raylib_cs.Rectangle)">
-            <summary>Crop an image to a defined rectangle</summary>
+        <member name="M:Raylib_cs.Raylib.ImageBlurGaussian(Raylib_cs.Image*,System.Int32)">
+            <summary>Apply Gaussian blur using a box blur approximation</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.ImageResize(Raylib_cs.Image*,System.Int32,System.Int32)">
             <summary>Resize image (Bicubic scaling algorithm)</summary>
@@ -874,6 +894,12 @@
         <member name="M:Raylib_cs.Raylib.ImageDrawCircleV(Raylib_cs.Image*,System.Numerics.Vector2,System.Int32,Raylib_cs.Color)">
             <summary>Draw circle within an image (Vector version)</summary>
         </member>
+        <member name="M:Raylib_cs.Raylib.ImageDrawCircleLines(Raylib_cs.Image*,System.Int32,System.Int32,System.Int32,Raylib_cs.Color)">
+            <summary>Draw circle outline within an image</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.ImageDrawCircleLinesV(Raylib_cs.Image*,System.Numerics.Vector2,System.Int32,Raylib_cs.Color)">
+            <summary>Draw circle outline within an image (Vector version)</summary>
+        </member>
         <member name="M:Raylib_cs.Raylib.ImageDrawRectangle(Raylib_cs.Image*,System.Int32,System.Int32,System.Int32,System.Int32,Raylib_cs.Color)">
             <summary>Draw rectangle within an image</summary>
         </member>
@@ -907,8 +933,14 @@
         <member name="M:Raylib_cs.Raylib.LoadRenderTexture(System.Int32,System.Int32)">
             <summary>Load texture for rendering (framebuffer)</summary>
         </member>
+        <member name="M:Raylib_cs.Raylib.IsTextureReady(Raylib_cs.Texture2D)">
+            <summary>Check if a texture is ready</summary>
+        </member>
         <member name="M:Raylib_cs.Raylib.UnloadTexture(Raylib_cs.Texture2D)">
             <summary>Unload texture from GPU memory (VRAM)</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.IsRenderTextureReady(Raylib_cs.RenderTexture2D)">
+            <summary>Check if a render texture is ready</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.UnloadRenderTexture(Raylib_cs.RenderTexture2D)">
             <summary>Unload render texture from GPU memory (VRAM)</summary>
@@ -940,20 +972,11 @@
         <member name="M:Raylib_cs.Raylib.DrawTextureRec(Raylib_cs.Texture2D,Raylib_cs.Rectangle,System.Numerics.Vector2,Raylib_cs.Color)">
             <summary>Draw a part of a texture defined by a rectangle</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.DrawTextureQuad(Raylib_cs.Texture2D,System.Numerics.Vector2,System.Numerics.Vector2,Raylib_cs.Rectangle,Raylib_cs.Color)">
-            <summary>Draw texture quad with tiling and offset parameters</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.DrawTextureTiled(Raylib_cs.Texture2D,Raylib_cs.Rectangle,Raylib_cs.Rectangle,System.Numerics.Vector2,System.Single,System.Single,Raylib_cs.Color)">
-            <summary>Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest</summary>
-        </member>
         <member name="M:Raylib_cs.Raylib.DrawTexturePro(Raylib_cs.Texture2D,Raylib_cs.Rectangle,Raylib_cs.Rectangle,System.Numerics.Vector2,System.Single,Raylib_cs.Color)">
             <summary>Draw a part of a texture defined by a rectangle with 'pro' parameters</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.DrawTextureNPatch(Raylib_cs.Texture2D,Raylib_cs.NPatchInfo,Raylib_cs.Rectangle,System.Numerics.Vector2,System.Single,Raylib_cs.Color)">
             <summary>Draws a texture (or part of it) that stretches or shrinks nicely</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.DrawTexturePoly(Raylib_cs.Texture2D,System.Numerics.Vector2,System.Numerics.Vector2*,System.Numerics.Vector2*,System.Int32,Raylib_cs.Color)">
-            <summary>Draw a textured polygon</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.ColorToInt(Raylib_cs.Color)">
             <summary>Get hexadecimal value for a Color</summary>
@@ -969,6 +992,15 @@
         </member>
         <member name="M:Raylib_cs.Raylib.ColorFromHSV(System.Single,System.Single,System.Single)">
             <summary>Get a Color from HSV values, hue [0..360], saturation/value [0..1]</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.ColorTint(Raylib_cs.Color,Raylib_cs.Color)">
+            <summary>Get color multiplied with another color</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.ColorBrightness(Raylib_cs.Color,System.Single)">
+            <summary>Get color with brightness correction, brightness factor goes from -1.0f to 1.0f</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.ColorContrast(Raylib_cs.Color,System.Single)">
+            <summary>Get color with contrast correction, contrast values between -1.0f and 1.0f</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.ColorAlpha(Raylib_cs.Color,System.Single)">
             <summary>Get color with alpha applied, alpha goes from 0.0f to 1.0f</summary>
@@ -1005,6 +1037,9 @@
         </member>
         <member name="M:Raylib_cs.Raylib.LoadFontFromMemory(System.SByte*,System.Byte*,System.Int32,System.Int32,System.Int32*,System.Int32)">
             <summary>Load font from memory buffer, fileType refers to extension: i.e. "ttf"</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.IsFontReady(Raylib_cs.Font)">
+            <summary>Check if a font is ready</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.LoadFontData(System.Byte*,System.Int32,System.Int32,System.Int32*,System.Int32,Raylib_cs.FontType)">
             <summary>Load font data for further use</summary>
@@ -1046,31 +1081,46 @@
             <summary>Measure string size for Font</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetGlyphIndex(Raylib_cs.Font,System.Int32)">
-            <summary>Get glyph index position in font for a codepoint (unicode character), fallback to '?' if not found</summary>
+            <summary>
+            Get glyph index position in font for a codepoint (unicode character), fallback to '?' if not found
+            </summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetGlyphInfo(Raylib_cs.Font,System.Int32)">
-            <summary>Get glyph font info data for a codepoint (unicode character), fallback to '?' if not found</summary>
+            <summary>
+            Get glyph font info data for a codepoint (unicode character), fallback to '?' if not found
+            </summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetGlyphAtlasRec(Raylib_cs.Font,System.Int32)">
-            <summary>Get glyph rectangle in font atlas for a codepoint (unicode character), fallback to '?' if not found</summary>
+            <summary>
+            Get glyph rectangle in font atlas for a codepoint (unicode character), fallback to '?' if not found
+            </summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.LoadUTF8(System.Int32*,System.Int32)">
+            <summary>Load UTF-8 text encoded from codepoints array</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.UnloadUTF8(System.Int32*)">
+            <summary>Unload UTF-8 text encoded from codepoints array</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.LoadCodepoints(System.SByte*,System.Int32*)">
-            <summary>Get all codepoints in a string, codepoints count returned by parameters</summary>
+            <summary>Load all codepoints from a UTF-8 text string, codepoints count returned by parameter</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.UnloadCodepoints(System.Int32*)">
             <summary>Unload codepoints data from memory</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetCodepointCount(System.SByte*)">
-            <summary>Get total number of characters (codepoints) in a UTF8 encoded string</summary>
+            <summary>Get total number of codepoints in a UTF8 encoded string</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetCodepoint(System.SByte*,System.Int32*)">
-            <summary>Get next codepoint in a UTF8 encoded string; 0x3f('?') is returned on failure</summary>
+            <summary>Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.GetCodepointNext(System.SByte*,System.Int32*)">
+            <summary>Get next codepoint in a UTF-8 encoded string; 0x3f('?') is returned on failure</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.GetCodepointPrevious(System.SByte*,System.Int32*)">
+            <summary>Get previous codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.CodepointToUTF8(System.Int32,System.Int32*)">
-            <summary>Encode codepoint into utf8 text (char array length returned as parameter)</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.TextCodepointsToUTF8(System.Int32*,System.Int32)">
-            <summary>Encode text as codepoints array into UTF-8 text string (WARNING: memory must be freed!)</summary>
+            <summary>Encode one codepoint into UTF-8 byte array (array length returned as parameter)</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.TextIsEqual(System.SByte*,System.SByte*)">
             <summary>Check if two text string are equal</summary>
@@ -1141,12 +1191,6 @@
         <member name="M:Raylib_cs.Raylib.DrawCubeWiresV(System.Numerics.Vector3,System.Numerics.Vector3,Raylib_cs.Color)">
             <summary>Draw cube wires (Vector version)</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.DrawCubeTexture(Raylib_cs.Texture2D,System.Numerics.Vector3,System.Single,System.Single,System.Single,Raylib_cs.Color)">
-            <summary>Draw cube textured</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.DrawCubeTextureRec(Raylib_cs.Texture2D,System.Numerics.Vector3,System.Single,System.Single,System.Single,Raylib_cs.Color)">
-            <summary>Draw cube with a region of a texture</summary>
-        </member>
         <member name="M:Raylib_cs.Raylib.DrawSphere(System.Numerics.Vector3,System.Single,Raylib_cs.Color)">
             <summary>Draw sphere</summary>
         </member>
@@ -1168,6 +1212,12 @@
         <member name="M:Raylib_cs.Raylib.DrawCylinderWiresEx(System.Numerics.Vector3,System.Numerics.Vector3,System.Single,System.Single,System.Int32,Raylib_cs.Color)">
             <summary>Draw a cylinder wires with base at startPos and top at endPos</summary>
         </member>
+        <member name="M:Raylib_cs.Raylib.DrawCapsule(System.Numerics.Vector3,System.Numerics.Vector3,System.Single,System.Int32,System.Int32,Raylib_cs.Color)">
+            <summary>Draw a capsule with the center of its sphere caps at startPos and endPos</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.DrawCapsuleWires(System.Numerics.Vector3,System.Numerics.Vector3,System.Single,System.Int32,System.Int32,Raylib_cs.Color)">
+            <summary>Draw capsule wireframe with the center of its sphere caps at startPos and endPos</summary>
+        </member>
         <member name="M:Raylib_cs.Raylib.DrawPlane(System.Numerics.Vector3,System.Numerics.Vector2,Raylib_cs.Color)">
             <summary>Draw a plane XZ</summary>
         </member>
@@ -1183,14 +1233,38 @@
         <member name="M:Raylib_cs.Raylib.LoadModelFromMesh(Raylib_cs.Mesh)">
             <summary>Load model from generated mesh (default material)</summary>
         </member>
+        <member name="M:Raylib_cs.Raylib.IsModelReady(Raylib_cs.Model)">
+            <summary>Check if a model is ready</summary>
+        </member>
         <member name="M:Raylib_cs.Raylib.UnloadModel(Raylib_cs.Model)">
             <summary>Unload model from memory (RAM and/or VRAM)</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.UnloadModelKeepMeshes(Raylib_cs.Model)">
-            <summary>Unload model (but not meshes) from memory (RAM and/or VRAM)</summary>
-        </member>
         <member name="M:Raylib_cs.Raylib.GetModelBoundingBox(Raylib_cs.Model)">
             <summary>Compute model bounding box limits (considers all meshes)</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.DrawModel(Raylib_cs.Model,System.Numerics.Vector3,System.Single,Raylib_cs.Color)">
+            <summary>Draw a model (with texture if set)</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.DrawModelEx(Raylib_cs.Model,System.Numerics.Vector3,System.Numerics.Vector3,System.Single,System.Numerics.Vector3,Raylib_cs.Color)">
+            <summary>Draw a model with extended parameters</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.DrawModelWires(Raylib_cs.Model,System.Numerics.Vector3,System.Single,Raylib_cs.Color)">
+            <summary>Draw a model wires (with texture if set)</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.DrawModelWiresEx(Raylib_cs.Model,System.Numerics.Vector3,System.Numerics.Vector3,System.Single,System.Numerics.Vector3,Raylib_cs.Color)">
+            <summary>Draw a model wires (with texture if set) with extended parameters</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.DrawBoundingBox(Raylib_cs.BoundingBox,Raylib_cs.Color)">
+            <summary>Draw bounding box (wires)</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.DrawBillboard(Raylib_cs.Camera3D,Raylib_cs.Texture2D,System.Numerics.Vector3,System.Single,Raylib_cs.Color)">
+            <summary>Draw a billboard texture</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.DrawBillboardRec(Raylib_cs.Camera3D,Raylib_cs.Texture2D,Raylib_cs.Rectangle,System.Numerics.Vector3,System.Numerics.Vector2,Raylib_cs.Color)">
+            <summary>Draw a billboard texture defined by source</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.DrawBillboardPro(Raylib_cs.Camera3D,Raylib_cs.Texture2D,Raylib_cs.Rectangle,System.Numerics.Vector3,System.Numerics.Vector3,System.Numerics.Vector2,System.Numerics.Vector2,System.Single,Raylib_cs.Color)">
+            <summary>Draw a billboard texture defined by source and rotation</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.UploadMesh(Raylib_cs.Mesh*,Raylib_cs.CBool)">
             <summary>Upload vertex data into GPU and provided VAO/VBO ids</summary>
@@ -1215,21 +1289,6 @@
         </member>
         <member name="M:Raylib_cs.Raylib.GenMeshTangents(Raylib_cs.Mesh*)">
             <summary>Compute mesh tangents</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.LoadMaterials(System.SByte*,System.Int32*)">
-            <summary>Load materials from model file</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.LoadMaterialDefault">
-            <summary>Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.UnloadMaterial(Raylib_cs.Material)">
-            <summary>Unload material from GPU memory (VRAM)</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.SetMaterialTexture(Raylib_cs.Material*,Raylib_cs.MaterialMapIndex,Raylib_cs.Texture2D)">
-            <summary>Set texture for a material map type (MAP_DIFFUSE, MAP_SPECULAR...)</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.SetModelMeshMaterial(Raylib_cs.Model*,System.Int32,System.Int32)">
-            <summary>Set material for a mesh</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GenMeshPoly(System.Int32,System.Single)">
             <summary>Generate polygonal mesh</summary>
@@ -1264,29 +1323,23 @@
         <member name="M:Raylib_cs.Raylib.GenMeshCubicmap(Raylib_cs.Image,System.Numerics.Vector3)">
             <summary>Generate cubes-based map mesh from image data</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.DrawModel(Raylib_cs.Model,System.Numerics.Vector3,System.Single,Raylib_cs.Color)">
-            <summary>Draw a model (with texture if set)</summary>
+        <member name="M:Raylib_cs.Raylib.LoadMaterials(System.SByte*,System.Int32*)">
+            <summary>Load materials from model file</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.DrawModelEx(Raylib_cs.Model,System.Numerics.Vector3,System.Numerics.Vector3,System.Single,System.Numerics.Vector3,Raylib_cs.Color)">
-            <summary>Draw a model with extended parameters</summary>
+        <member name="M:Raylib_cs.Raylib.LoadMaterialDefault">
+            <summary>Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.DrawModelWires(Raylib_cs.Model,System.Numerics.Vector3,System.Single,Raylib_cs.Color)">
-            <summary>Draw a model wires (with texture if set)</summary>
+        <member name="M:Raylib_cs.Raylib.IsMaterialReady">
+            <summary>Check if a material is ready</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.DrawModelWiresEx(Raylib_cs.Model,System.Numerics.Vector3,System.Numerics.Vector3,System.Single,System.Numerics.Vector3,Raylib_cs.Color)">
-            <summary>Draw a model wires (with texture if set) with extended parameters</summary>
+        <member name="M:Raylib_cs.Raylib.UnloadMaterial(Raylib_cs.Material)">
+            <summary>Unload material from GPU memory (VRAM)</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.DrawBoundingBox(Raylib_cs.BoundingBox,Raylib_cs.Color)">
-            <summary>Draw bounding box (wires)</summary>
+        <member name="M:Raylib_cs.Raylib.SetMaterialTexture(Raylib_cs.Material*,Raylib_cs.MaterialMapIndex,Raylib_cs.Texture2D)">
+            <summary>Set texture for a material map type (MAP_DIFFUSE, MAP_SPECULAR...)</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.DrawBillboard(Raylib_cs.Camera3D,Raylib_cs.Texture2D,System.Numerics.Vector3,System.Single,Raylib_cs.Color)">
-            <summary>Draw a billboard texture</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.DrawBillboardRec(Raylib_cs.Camera3D,Raylib_cs.Texture2D,Raylib_cs.Rectangle,System.Numerics.Vector3,System.Numerics.Vector2,Raylib_cs.Color)">
-            <summary>Draw a billboard texture defined by source</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.DrawBillboardPro(Raylib_cs.Camera3D,Raylib_cs.Texture2D,Raylib_cs.Rectangle,System.Numerics.Vector3,System.Numerics.Vector3,System.Numerics.Vector2,System.Numerics.Vector2,System.Single,Raylib_cs.Color)">
-            <summary>Draw a billboard texture defined by source and rotation</summary>
+        <member name="M:Raylib_cs.Raylib.SetModelMeshMaterial(Raylib_cs.Model*,System.Int32,System.Int32)">
+            <summary>Set material for a mesh</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.LoadModelAnimations(System.SByte*,System.UInt32*)">
             <summary>Load model animations from file</summary>
@@ -1345,11 +1398,17 @@
         <member name="M:Raylib_cs.Raylib.LoadWaveFromMemory(System.SByte*,System.Byte*,System.Int32)">
             <summary>Load wave from memory buffer, fileType refers to extension: i.e. "wav"</summary>
         </member>
+        <member name="M:Raylib_cs.Raylib.IsWaveReady(Raylib_cs.Wave)">
+            <summary>Checks if wave data is ready</summary>
+        </member>
         <member name="M:Raylib_cs.Raylib.LoadSound(System.SByte*)">
             <summary>Load sound from file</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.LoadSoundFromWave(Raylib_cs.Wave)">
             <summary>Load sound from wave data</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.IsSoundReady(Raylib_cs.Sound)">
+            <summary>Checks if a sound is ready</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.UpdateSound(Raylib_cs.Sound,System.Void*,System.Int32)">
             <summary>Update sound buffer with new data</summary>
@@ -1377,12 +1436,6 @@
         </member>
         <member name="M:Raylib_cs.Raylib.ResumeSound(Raylib_cs.Sound)">
             <summary>Resume a paused sound</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.PlaySoundMulti(Raylib_cs.Sound)">
-            <summary>Play a sound (using multichannel buffer pool)</summary>
-        </member>
-        <member name="M:Raylib_cs.Raylib.StopSoundMulti">
-            <summary>Stop any sound playing (using multichannel buffer pool)</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetSoundsPlaying">
             <summary>Get number of sounds playing in the multichannel</summary>
@@ -1419,6 +1472,9 @@
         </member>
         <member name="M:Raylib_cs.Raylib.LoadMusicStreamFromMemory(System.SByte*,System.Byte*,System.Int32)">
             <summary>Load music stream from data</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.IsMusicReady(Raylib_cs.Music)">
+            <summary>Checks if a music stream is ready</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.UnloadMusicStream(Raylib_cs.Music)">
             <summary>Unload music stream</summary>
@@ -1461,6 +1517,9 @@
         </member>
         <member name="M:Raylib_cs.Raylib.LoadAudioStream(System.UInt32,System.UInt32,System.UInt32)">
             <summary>Init audio stream (to stream raw audio pcm data)</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.IsAudioStreamReady(Raylib_cs.AudioStream)">
+            <summary>Checks if an audio stream is ready</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.UnloadAudioStream(Raylib_cs.AudioStream)">
             <summary>Unload audio stream and free memory</summary>
@@ -1506,6 +1565,12 @@
         </member>
         <member name="M:Raylib_cs.Raylib.DetachAudioStreamProcessor(Raylib_cs.AudioStream,)">
             <summary>Detach audio stream processor from stream</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.AttachAudioMixedProcessor()">
+            <summary>Attach audio stream processor to the entire audio pipeline</summary>
+        </member>
+        <member name="M:Raylib_cs.Raylib.DetachAudioMixedProcessor()">
+            <summary>Detach audio stream processor from the entire audio pipeline</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.InitWindow(System.Int32,System.Int32,System.String)">
             <summary>Initialize window and OpenGL context</summary>
@@ -1585,11 +1650,13 @@
         <member name="M:Raylib_cs.Raylib.GetGamepadName_(System.Int32)">
             <summary>Get gamepad internal name id</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.UpdateCamera(Raylib_cs.Camera3D@)">
+        <member name="M:Raylib_cs.Raylib.UpdateCamera(Raylib_cs.Camera3D@,Raylib_cs.CameraMode)">
             <summary>Update camera position for selected mode</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.CheckCollisionLines(System.Numerics.Vector2,System.Numerics.Vector2,System.Numerics.Vector2,System.Numerics.Vector2,System.Numerics.Vector2@)">
-            <summary>Check the collision between two lines defined by two points each, returns collision point by reference</summary>
+            <summary>
+            Check the collision between two lines defined by two points each, returns collision point by reference
+            </summary>
         </member>
         <member name="M:Raylib_cs.Raylib.ImageText(System.String,System.Int32,Raylib_cs.Color)">
             <summary>Create an image from text (default font)</summary>
@@ -1750,9 +1817,6 @@
         <member name="M:Raylib_cs.Raylib.DrawTriangleStrip(System.Numerics.Vector2[],System.Int32,Raylib_cs.Color)">
             <summary>Draw a triangle strip defined by points</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.DrawTexturePoly(Raylib_cs.Texture2D,System.Numerics.Vector2,System.Numerics.Vector2[],System.Numerics.Vector2[],System.Int32,Raylib_cs.Color)">
-            <summary>Draw a textured polygon</summary>
-        </member>
         <member name="M:Raylib_cs.Raylib.DrawText(System.String,System.Int32,System.Int32,System.Int32,Raylib_cs.Color)">
             <summary>Draw text (using default font)</summary>
         </member>
@@ -1781,17 +1845,17 @@
             <summary>Get all codepoints in a string, codepoints count returned by parameters</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetCodepointCount(System.String)">
-            <summary>Get total number of characters (codepoints) in a UTF8 encoded string</summary>
+            <summary>Get total number of codepoints in a UTF8 encoded string</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.GetCodepoint(System.String,System.Int32@)">
-            <summary>Get next codepoint in a UTF8 encoded string; 0x3f('?') is returned on failure</summary>
+            <summary>Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure</summary>
             <returns>single codepoint / "char"</returns>
         </member>
         <member name="M:Raylib_cs.Raylib.CodepointToUTF8(System.Int32,System.Int32@)">
-            <summary>Encode codepoint into utf8 text (char array length returned as parameter)</summary>
+            <summary>Encode one codepoint into UTF-8 byte array (array length returned as parameter)</summary>
         </member>
-        <member name="M:Raylib_cs.Raylib.TextCodepointsToUTF8(System.Int32[],System.Int32)">
-            <summary>Encode codepoint into utf8 text (char array length returned as parameter)</summary>
+        <member name="M:Raylib_cs.Raylib.LoadUTF8(System.Int32[],System.Int32)">
+            <summary>Load UTF-8 text encoded from codepoints array</summary>
         </member>
         <member name="M:Raylib_cs.Raylib.LoadModel(System.String)">
             <summary>Draw a model (with texture if set)</summary>
@@ -1877,7 +1941,17 @@
             <summary>Calculate square distance between two vectors</summary>
         </member>
         <member name="M:Raylib_cs.Raymath.Vector2Angle(System.Numerics.Vector2,System.Numerics.Vector2)">
-            <summary>Calculate angle from two vectors</summary>
+            <summary>
+            Calculate angle between two vectors
+            NOTE: Angle is calculated from origin point (0, 0)
+            </summary>
+        </member>
+        <member name="M:Raylib_cs.Raymath.Vector2LineAngle(System.Numerics.Vector2,System.Numerics.Vector2)">
+            <summary>
+            Calculate angle defined by a two vectors line
+            NOTE: Parameters need to be normalized
+            Current implementation should be aligned with glm::angle
+            </summary>
         </member>
         <member name="M:Raylib_cs.Raymath.Vector2Scale(System.Numerics.Vector2,System.Single)">
             <summary>Scale vector (multiply by value)</summary>
@@ -2320,6 +2394,9 @@
         <member name="M:Raylib_cs.Rlgl.rlTextureParameters(System.UInt32,System.Int32,System.Int32)">
             <summary>Set texture parameters (filter, wrap)</summary>
         </member>
+        <member name="M:Raylib_cs.Rlgl.rlCubemapParameters(System.UInt32,System.Int32,System.Int32)">
+            <summary>Set cubemap parameters (filter, wrap)</summary>
+        </member>
         <member name="M:Raylib_cs.Rlgl.rlEnableShader(System.UInt32)">
             <summary>Enable shader program</summary>
         </member>
@@ -2358,6 +2435,9 @@
         </member>
         <member name="M:Raylib_cs.Rlgl.rlDisableBackfaceCulling">
             <summary>Disable backface culling</summary>
+        </member>
+        <member name="M:Raylib_cs.Rlgl.rlSetCullFace(System.Int32)">
+            <summary>Set face culling mode</summary>
         </member>
         <member name="M:Raylib_cs.Rlgl.rlEnableScissorTest">
             <summary>Enable scissor test</summary>
@@ -2409,6 +2489,9 @@
         </member>
         <member name="M:Raylib_cs.Rlgl.rlSetBlendFactors(System.Int32,System.Int32,System.Int32)">
             <summary>Set blending mode factor and equation (using OpenGL factors)</summary>
+        </member>
+        <member name="M:Raylib_cs.Rlgl.rlSetBlendFactorsSeparate(System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>Set blending mode factors and equations separately (using OpenGL factors)</summary>
         </member>
         <member name="M:Raylib_cs.Rlgl.rlglInit(System.Int32,System.Int32)">
             <summary>Initialize rlgl (buffers, shaders, textures, states)</summary>
@@ -2557,28 +2640,28 @@
         <member name="M:Raylib_cs.Rlgl.rlComputeShaderDispatch(System.UInt32,System.UInt32,System.UInt32)">
             <summary>Dispatch compute shader (equivalent to *draw* for graphics pilepine)</summary>
         </member>
-        <member name="M:Raylib_cs.Rlgl.rlLoadShaderBuffer(System.UInt64,System.Void*,System.Int32)">
+        <member name="M:Raylib_cs.Rlgl.rlLoadShaderBuffer(System.UInt32,System.Void*,System.Int32)">
             <summary>Load shader storage buffer object (SSBO)</summary>
         </member>
         <member name="M:Raylib_cs.Rlgl.rlUnloadShaderBuffer(System.UInt32)">
             <summary>Unload shader storage buffer object (SSBO)</summary>
         </member>
-        <member name="M:Raylib_cs.Rlgl.rlUpdateShaderBufferElements(System.UInt32,System.Void*,System.UInt64,System.UInt64)">
+        <member name="M:Raylib_cs.Rlgl.rlUpdateShaderBuffer(System.UInt32,System.Void*,System.UInt32,System.UInt32)">
             <summary>Update SSBO buffer data</summary>
         </member>
-        <member name="M:Raylib_cs.Rlgl.rlGetShaderBufferSize(System.UInt32,System.Void*,System.UInt64,System.UInt64)">
+        <member name="M:Raylib_cs.Rlgl.rlBindShaderBuffer(System.UInt32,System.UInt32)">
+            <summary>Bind SSBO buffer data</summary>
+        </member>
+        <member name="M:Raylib_cs.Rlgl.rlReadShaderBuffer(System.UInt32,System.Void*,System.UInt32,System.UInt32)">
+            <summary>Read SSBO buffer data (GPU->CPU)</summary>
+        </member>
+        <member name="M:Raylib_cs.Rlgl.rlCopyShaderBuffer(System.UInt32,System.UInt32,System.UInt32,System.UInt32,System.UInt32)">
+            <summary>Copy SSBO data between buffers</summary>
+        </member>
+        <member name="M:Raylib_cs.Rlgl.rlGetShaderBufferSize(System.UInt32)">
             <summary>Get SSBO buffer size</summary>
         </member>
-        <member name="M:Raylib_cs.Rlgl.rlReadShaderBufferElements(System.UInt32,System.Void*,System.UInt64,System.UInt64)">
-            <summary>Bind SSBO buffer</summary>
-        </member>
-        <member name="M:Raylib_cs.Rlgl.rlBindShaderBuffer(System.UInt32,System.UInt32)">
-            <summary> Copy SSBO buffer data</summary>
-        </member>
-        <member name="M:Raylib_cs.Rlgl.rlCopyBuffersElements(System.UInt32,System.UInt32,System.UInt64,System.UInt64,System.UInt64)">
-            <summary>Copy SSBO buffer data</summary>
-        </member>
-        <member name="M:Raylib_cs.Rlgl.rlBindImageTexture(System.UInt32,System.UInt32,System.UInt32,System.Int32)">
+        <member name="M:Raylib_cs.Rlgl.rlBindImageTexture(System.UInt32,System.UInt32,System.Int32,Raylib_cs.CBool)">
             <summary>Bind image texture</summary>
         </member>
         <member name="M:Raylib_cs.Rlgl.rlGetMatrixModelview">
@@ -2969,7 +3052,12 @@
         </member>
         <member name="F:Raylib_cs.BlendMode.BLEND_CUSTOM">
             <summary>
-            Blend textures using custom src/dst factors (use rlSetBlendMode())
+            Blend textures using custom src/dst factors (use rlSetBlendFactors())
+            </summary>
+        </member>
+        <member name="F:Raylib_cs.BlendMode.BLEND_CUSTOM_SEPARATE">
+            <summary>
+            Blend textures using custom rgb/alpha separate src/dst factors (use rlSetBlendFactorsSeparate())
             </summary>
         </member>
         <member name="T:Raylib_cs.FontType">
@@ -3301,7 +3389,7 @@
         </member>
         <member name="F:Raylib_cs.MouseCursor.MOUSE_CURSOR_RESIZE_ALL">
             <summary>
-            The omni-directional resize/move cursor shape
+            The omnidirectional resize/move cursor shape
             </summary>
         </member>
         <member name="F:Raylib_cs.MouseCursor.MOUSE_CURSOR_NOT_ALLOWED">
@@ -3887,12 +3975,12 @@
         </member>
         <member name="F:Raylib_cs.RayCollision.distance">
             <summary>
-            Distance to nearest hit
+            Distance to the nearest hit
             </summary>
         </member>
         <member name="F:Raylib_cs.RayCollision.point">
             <summary>
-            Position of nearest hit
+            Point of the nearest hit
             </summary>
         </member>
         <member name="F:Raylib_cs.RayCollision.normal">
@@ -4256,7 +4344,7 @@
         </member>
         <member name="F:Raylib_cs.CubemapLayout.CUBEMAP_LAYOUT_LINE_HORIZONTAL">
             <summary>
-            Layout is defined by an horizontal line with faces
+            Layout is defined by a horizontal line with faces
             </summary>
         </member>
         <member name="F:Raylib_cs.CubemapLayout.CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR">

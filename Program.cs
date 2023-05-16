@@ -1,6 +1,7 @@
 ﻿using Raylib_cs;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.Design;
 using System.Drawing;
@@ -10,7 +11,61 @@ using Color = Raylib_cs.Color;
 
 namespace Chekkers
 {
-
+    enum players
+    {
+        WHITE,
+        BLACK
+    }
+    class AI
+    {
+        public static int difficulty;
+        public static players player;
+        public static int getStrength(int[,] board, players player)//funkcja zwracajaca sile pojedynczego ruchu
+        {
+            /*
+             * ZASADY LICZENIA SIŁY:
+             * PION - 1 PKT
+             * PION W STRUKTURZE (PRZYLEPIONY DO INNEGO PIONA TEGO SAMEGO KOLORU) - 1 PKT
+             * PION W 4 I 5 KOLUMNIE/WIERSZU - 2 PKT
+             * PION W 3 I 6 KOLUMNIE/WIERSZU - 1 PKT
+             * PION NARAŻONY NA BICIE - -1PKT
+             */
+            int whiteStrength = 0;
+            int blackStrength = 0;
+            if(player == players.WHITE)
+            {
+                //liczenie pionów
+                for(int i = 0; i < board.GetLength(0);i++)
+                {
+                    for (int j = 0; j < board.GetLength(1); j++)
+                    {
+                        if (board[i, j] == 1)
+                        {
+                            whiteStrength++;
+                            if (i == 3 || i == 4 || j == 3 || j == 4)//doliczanie za centralne miejsca
+                                whiteStrength += 2;
+                            else if (i == 2 || i == 5 || j == 2 || j == 5)
+                                whiteStrength++;
+                        }
+                        else if (board[i, j] == 2)
+                        {
+                            blackStrength++;
+                            if (i == 3 || i == 4 || j == 3 || j == 4)//doliczanie za centralne miejsca
+                                blackStrength += 2;
+                            else if (i == 2 || i == 5 || j == 2 || j == 5)
+                                blackStrength++;
+                        }
+                    }
+                }
+                return whiteStrength - blackStrength;
+            }
+            else
+            {
+                return blackStrength - whiteStrength;
+            }
+            
+        }
+    }
     static class Program
     {
         static List<Tuple<int, int>> beatings = new List<Tuple<int, int>>();//przechowuje liste bic dla konkretnego pionka
@@ -72,9 +127,22 @@ namespace Chekkers
                 {
                     if (board[i, j] == 1)//rysuj pionki biale
                         Raylib.DrawCircle(j * cellSize + cellSize / 2, i * cellSize + cellSize / 2, cellSize / 2, Color.WHITE);
-                    else if(board[i, j] == 2)//rysuj pionki czarne
+                    else if (board[i, j] == 2)//rysuj pionki czarne
                         Raylib.DrawCircle(j * cellSize + cellSize / 2, i * cellSize + cellSize / 2, cellSize / 2, Color.BLACK);
                     //TODO - DAMKI
+                    else if (board[i, j] == 3)//damka biala
+                    {
+                        Raylib.DrawCircle(j * cellSize + cellSize / 2, i * cellSize + cellSize / 2, cellSize / 2, Color.GOLD);
+                        Raylib.DrawCircle(j * cellSize + cellSize / 2, i * cellSize + cellSize / 2, cellSize / 3, Color.WHITE);
+                    }
+                    else if (board[i, j] == 4)//damka czarna
+                    {
+                        Raylib.DrawCircle(j * cellSize + cellSize / 2, i * cellSize + cellSize / 2, cellSize / 2, Color.GOLD);
+                        Raylib.DrawCircle(j * cellSize + cellSize / 2, i * cellSize + cellSize / 2, cellSize / 3, Color.BLACK);
+                    }
+                    
+                        
+
                 }
             }
         }
@@ -85,12 +153,13 @@ namespace Chekkers
 
         public static void searchPieces(Tuple<int, int> start, Tuple<int, int> destination, Tuple<int, int> prevPos, int[,] board, int opponent)
         {
-            Console.WriteLine("tttt");
+            
             int x = start.Item2;
             int y = start.Item1;
-            if (x == destination.Item2 && y == destination.Item1)
+            Console.WriteLine("tttt: " + x + " " + y + " | " + destination.Item2 + " " + destination.Item1+" | "+ piecesToRemove.Count +" "+maxBeatings);
+            if (x == destination.Item2 && y == destination.Item1 && piecesToRemove.Count == maxBeatings)
             {
-                Console.WriteLine("xxxxxxxxxx  "+piecesToRemove.Count);
+                Console.WriteLine("tescik  "+piecesToRemove.Count);
                 foreach (var piece in piecesToRemove)
                 {
                     board[piece.Item1, piece.Item2] = 0;
@@ -106,7 +175,7 @@ namespace Chekkers
                 searchPieces(nextMove, destination, start, board, opponent);
                 piecesToRemove.RemoveAt(piecesToRemove.Count - 1);
             }
-            if (x - 2 >= 0 && y + 2 < board.GetLength(0) && board[y + 2, x - 2] == 0 && opponent == board[y + 1, x - 1] && (prevPos.Item2 != x - 2 || prevPos.Item1 != y + 2))
+            if (x - 2 >= 0 && y + 2 < board.GetLength(0) && board[y + 2, x - 2] == 0  && opponent == board[y + 1, x - 1] && (prevPos.Item2 != x - 2 || prevPos.Item1 != y + 2))
             {
                 
                 Tuple<int, int> pieceToRemove = new Tuple<int, int>(y + 1, x - 1);
@@ -139,111 +208,118 @@ namespace Chekkers
         {
             int x = pieceClicked.Item2;
             int y = pieceClicked.Item1;
-            if (x - 2 >= 0 && y - 2 >= 0 && board[y - 2, x - 2] == 0 && opponent == board[y - 1, x - 1])//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
+            if (x - 2 >= 0 && y - 2 >= 0 && board[y - 2, x - 2] == 0 && (opponent == board[y - 1, x - 1] || opponent + 2 == board[y - 1, x - 1]))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
                 return true;
-            if (x - 2 >=0 && y + 2 < board.GetLength(0) && board[y + 2, x - 2] == 0 && opponent == board[y + 1, x - 1])
+            if (x - 2 >=0 && y + 2 < board.GetLength(0) && board[y + 2, x - 2] == 0 && (opponent == board[y + 1, x - 1] || opponent + 2 == board[y + 1, x - 1]))
                     return true;
-            if (x + 2 < board.GetLength(0) && y - 2 >= 0 && board[y - 2, x + 2] == 0 && opponent == board[y - 1, x + 1])//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
+            if (x + 2 < board.GetLength(0) && y - 2 >= 0 && board[y - 2, x + 2] == 0 && (opponent == board[y - 1, x + 1] || opponent + 2 == board[y - 1, x + 1]))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
                 return true;
-            if (x + 2 < board.GetLength(1) && y + 2 < board.GetLength(0) && board[y + 2, x + 2] == 0 && opponent == board[y + 1, x + 1])
+            if (x + 2 < board.GetLength(1) && y + 2 < board.GetLength(0) && board[y + 2, x + 2] == 0 && (opponent == board[y + 1, x + 1] || opponent + 2 == board[y + 1, x + 1]))
                     return true;
 
             return false;
         }
-        public static void getBeatingsV2(Tuple<int, int> pieceClicked, int[,] board, int opponent, int length, Tuple<int, int> prevPos)
+        public static void getBeatingsV2(Tuple<int, int> pieceClicked, int[,] board, int opponent, int length, Tuple<int, int> prevPos, Tuple<int,int> startPos)
         {
             int x = pieceClicked.Item2;
             int y = pieceClicked.Item1;
             //List<Tuple<int, int>> beatings = new List<Tuple<int, int>>();
-            if (x - 2 >= 0 && y - 2 >= 0 && board[y - 2, x - 2] == 0 && opponent == board[y - 1, x - 1] && (prevPos.Item2!=x-2 || prevPos.Item1!=y-2))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
+            if (pieceClicked.Item1 == startPos.Item1 && pieceClicked.Item2 == startPos.Item2 && length > 2)//znaczy ze zapetlilo sie koło - koniec bicia
             {
-                Tuple<int, int> legalBeating = new Tuple<int, int>(y - 2, x - 2);
-                Tuple<int, int> pieceToRemove = new Tuple<int, int>(y - 1, x - 1);
-                if (length + 1 > maxBeatings)
-                {
-                    maxBeatings = length + 1;
-                    //if (beatings.Count > 0)
-                        beatings.Clear();
-                    
-                    beatings.Add(legalBeating);
 
-                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
-                }
-                else if(length + 1 == maxBeatings)
-                {
-                   
-                    beatings.Add(legalBeating);
-                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
-                }
-                else if(length + 1 < maxBeatings)
-                {
-                   
-                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
-                }
             }
+            else
+            {
+                if ((x - 2 >= 0 && y - 2 >= 0 && board[y - 2, x - 2] == 0 && opponent == board[y - 1, x - 1] && (prevPos.Item2 != x - 2 || prevPos.Item1 != y - 2)) || (x - 2 >= 0 && y - 2 >= 0 && startPos.Item1 == y - 2 && startPos.Item2 == x - 2 && length > 2 && opponent == board[y - 1, x - 1] && (prevPos.Item2 != x - 2 || prevPos.Item1 != y - 2)))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
+                {
+                    Tuple<int, int> legalBeating = new Tuple<int, int>(y - 2, x - 2);
+                    Tuple<int, int> pieceToRemove = new Tuple<int, int>(y - 1, x - 1);
+                    if (length + 1 > maxBeatings)
+                    {
+                        maxBeatings = length + 1;
+                        //if (beatings.Count > 0)
+                        beatings.Clear();
 
-            if (x - 2 >= 0 && y + 2 < board.GetLength(0) && board[y + 2, x - 2] == 0 && opponent == board[y + 1, x - 1] && (prevPos.Item2 != x-2 || prevPos.Item1 != y+2))
-            {
-                Tuple<int, int> legalBeating = new Tuple<int, int>(y + 2, x - 2);
-                
-                if (length + 1 > maxBeatings)
+                        beatings.Add(legalBeating);
+
+                        getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked, startPos);
+                    }
+                    else if (length + 1 == maxBeatings)
+                    {
+
+                        beatings.Add(legalBeating);
+                        getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked, startPos);
+                    }
+                    else if (length + 1 < maxBeatings)
+                    {
+
+                        getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked, startPos);
+                    }
+                }
+
+                if ((x - 2 >= 0 && y + 2 < board.GetLength(0) && board[y + 2, x - 2] == 0 && opponent == board[y + 1, x - 1] && (prevPos.Item2 != x - 2 || prevPos.Item1 != y + 2)) || (x - 2 >= 0 && y + 2 >= 0 && startPos.Item1 == y + 2 && startPos.Item2 == x - 2 && length > 2 && opponent == board[y + 1, x - 1] && (prevPos.Item2 != x - 2 || prevPos.Item1 != y + 2)))
                 {
-                    maxBeatings = length + 1;
-                    //if(beatings.Count>0)
+                    Tuple<int, int> legalBeating = new Tuple<int, int>(y + 2, x - 2);
+
+                    if (length + 1 > maxBeatings)
+                    {
+                        maxBeatings = length + 1;
+                        //if(beatings.Count>0)
                         beatings.Clear();
-                    beatings.Add(legalBeating);
-                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
+                        beatings.Add(legalBeating);
+                        getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked, startPos);
+                    }
+                    else if (length + 1 == maxBeatings)
+                    {
+                        beatings.Add(legalBeating);
+                        getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked, startPos);
+                    }
+                    else if (length + 1 < maxBeatings)
+                    {
+                        getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked, startPos);
+                    }
                 }
-                else if (length + 1 == maxBeatings)
+                if ((x + 2 < board.GetLength(0) && y - 2 >= 0 && board[y - 2, x + 2] == 0 && opponent == board[y - 1, x + 1] && (prevPos.Item2 != x + 2 || prevPos.Item1 != y - 2)) || (x + 2 >= 0 && y - 2 >= 0 && startPos.Item1 == y - 2 && startPos.Item2 == x + 2 && length > 2 && opponent == board[y - 1, x + 1] && (prevPos.Item2 != x + 2 || prevPos.Item1 != y - 2)))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
                 {
-                    beatings.Add(legalBeating);
-                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
-                }
-                else if (length + 1 < maxBeatings)
-                {
-                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
-                }
-            }
-            if (x + 2 < board.GetLength(0) && y - 2 >= 0 && board[y - 2, x + 2] == 0 && opponent == board[y - 1, x + 1] && (prevPos.Item2 != x+2 || prevPos.Item1 != y-2))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
-            {
-                Tuple<int, int> legalBeating = new Tuple<int, int>(y - 2, x + 2);
-                if (length + 1 > maxBeatings)
-                {
-                    maxBeatings = length + 1;
-                    //if (beatings.Count > 0)
+                    Tuple<int, int> legalBeating = new Tuple<int, int>(y - 2, x + 2);
+                    if (length + 1 > maxBeatings)
+                    {
+                        maxBeatings = length + 1;
+                        //if (beatings.Count > 0)
                         beatings.Clear();
-                    beatings.Add(legalBeating);
-                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
+                        beatings.Add(legalBeating);
+                        getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked, startPos);
+                    }
+                    else if (length + 1 == maxBeatings)
+                    {
+                        beatings.Add(legalBeating);
+                        getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked, startPos);
+                    }
+                    else if (length + 1 < maxBeatings)
+                    {
+                        getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked, startPos);
+                    }
                 }
-                else if (length + 1 == maxBeatings)
+                if ((x + 2 < board.GetLength(0) && y + 2 < board.GetLength(1) && board[y + 2, x + 2] == 0 && opponent == board[y + 1, x + 1] && (prevPos.Item2 != x + 2 || prevPos.Item1 != y + 2)) || (x + 2 >= 0 && y + 2 >= 0 && startPos.Item1 == y + 2 && startPos.Item2 == x + 2 && length > 2 && opponent == board[y + 1, x + 1] && (prevPos.Item2 != x + 2 || prevPos.Item1 != y + 2)))
                 {
-                    beatings.Add(legalBeating);
-                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
-                }
-                else if (length + 1 < maxBeatings)
-                {
-                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
-                }
-            }
-            if (x + 2 < board.GetLength(0) && y + 2 < board.GetLength(1) && board[y + 2, x + 2] == 0 && opponent == board[y + 1, x + 1] && (prevPos.Item2 != x+2 || prevPos.Item1 != y+2))
-            {
-                Tuple<int, int> legalBeating = new Tuple<int, int>(y + 2, x + 2);
-                if (length + 1 > maxBeatings)
-                {
-                    maxBeatings = length + 1;
-                    //if (beatings.Count > 0) 
+                    Tuple<int, int> legalBeating = new Tuple<int, int>(y + 2, x + 2);
+                    if (length + 1 > maxBeatings)
+                    {
+                        maxBeatings = length + 1;
+                        //if (beatings.Count > 0) 
                         beatings.Clear();
-                    beatings.Add(legalBeating);
-                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
-                }
-                else if (length + 1 == maxBeatings)
-                {
-                    beatings.Add(legalBeating);
-                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
-                }
-                else if (length + 1 < maxBeatings)
-                {
-                    getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked);
+                        beatings.Add(legalBeating);
+                        getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked, startPos);
+                    }
+                    else if (length + 1 == maxBeatings)
+                    {
+                        beatings.Add(legalBeating);
+                        getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked, startPos);
+                    }
+                    else if (length + 1 < maxBeatings)
+                    {
+                        getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked, startPos);
+                    }
                 }
             }
         }
@@ -325,6 +401,21 @@ namespace Chekkers
 
             */
         }
+        public static void promotion (Tuple<int,int> position, int[,] board)
+        {
+            if(position.Item1 == 7 && board[position.Item1, position.Item2] == 2)//czarny na koncu planszy - promocja
+            {
+                board[position.Item1, position.Item2] = 4;
+                Console.WriteLine("PROMOTED!");
+            }
+            if (position.Item1 == 0 && board[position.Item1, position.Item2] == 1)//bialy na koncu - promocja
+            {
+
+                board[position.Item1, position.Item2] = 3;
+                Console.WriteLine("PROMOTED!");
+
+            }
+        }
         public static void movePiece(int y, int x, int yDestination, int xDestination, int[,] board)
         { 
             
@@ -344,6 +435,19 @@ namespace Chekkers
                 board[y, x] = 0;
                 board[yDestination, xDestination] = 2;
             }
+            //obsluga damek
+            if (board[y, x] == 3)
+            {
+                board[y, x] = 0;
+                board[yDestination, xDestination] = 3;
+            }
+            if (board[y, x] == 4)
+            {
+                board[y, x] = 0;
+                board[yDestination, xDestination] = 4;
+            }
+
+
         }
         public static void removePiece(Tuple<int, int> pieceClicked, Tuple<int, int> cellClicked, int[,] board)
         {
@@ -363,7 +467,7 @@ namespace Chekkers
                     //beatingCounter = 1;
                     beatings.Clear();
                     maxBeatings = 0;
-                    getBeatingsV2(pieceClicked, board, 2, 0, pieceClicked);
+                    getBeatingsV2(pieceClicked, board, 2, 0, pieceClicked, pieceClicked);
                     moves = beatings;
                     Console.WriteLine(maxBeatings);
                 }
@@ -400,7 +504,7 @@ namespace Chekkers
                     //beatingCounter = 1;
                     beatings.Clear();
                     maxBeatings = 0;
-                    getBeatingsV2(pieceClicked, board, 1,0, pieceClicked);
+                    getBeatingsV2(pieceClicked, board, 1,0, pieceClicked, pieceClicked);
                     moves = beatings;
                     
                     Console.WriteLine(maxBeatings);
@@ -418,7 +522,7 @@ namespace Chekkers
                         }
 
                     }
-                    if (x + 1 < board.GetLength(1) && y + 1 >= 0)//czy nie wychodzimy poza tablice
+                    if (x + 1 < board.GetLength(1) && y + 1 < board.GetLength(0))//czy nie wychodzimy poza tablice
                     {
                         if (board[y + 1, x + 1] == 0)//sprawdzam, czy pole na ukos w prawo jest wolne
                         {
@@ -432,10 +536,113 @@ namespace Chekkers
             else if (board[y, x] == 3)
             {
                 //obsluga ruchow bialej damki
+                if (beatingAvaliable(pieceClicked, board, 2))
+                {
+                    //beatingCounter = 1;
+                    beatings.Clear();
+                    maxBeatings = 0;
+                    getBeatingsV2(pieceClicked, board, 2, 0, pieceClicked, pieceClicked);
+                    moves = beatings;
+                    Console.WriteLine(maxBeatings);
+                }
+                //obsluga ruchow bialego pionka - tylko jesli nie ma bicia (dlatego else)
+
+                else
+                {
+                    if (x - 1 >= 0 && y - 1 >= 0)//czy nie wychodzimy poza tablice
+                    {
+                        if (board[y - 1, x - 1] == 0)//sprawdzam, czy pole na ukos w lewo jest wolne
+                        {
+                            Tuple<int, int> legalMove = new Tuple<int, int>(y - 1, x - 1);
+                            moves.Insert(i, legalMove);
+                            i++;
+                        }
+
+                    }
+                    if (x + 1 < board.GetLength(1) && y - 1 >= 0)//czy nie wychodzimy poza tablice
+                    {
+                        if (board[y - 1, x + 1] == 0)//sprawdzam, czy pole na ukos w prawo jest wolne
+                        {
+                            Tuple<int, int> legalMove = new Tuple<int, int>(y - 1, x + 1);
+                            moves.Insert(i, legalMove);
+                            i++;
+                        }
+                    }
+                    if (x - 1 >= 0 && y + 1 < board.GetLength(0))//czy nie wychodzimy poza tablice
+                    {
+                        if (board[y + 1, x - 1] == 0)//sprawdzam, czy pole na ukos w lewo jest wolne
+                        {
+                            Tuple<int, int> legalMove = new Tuple<int, int>(y + 1, x - 1);
+                            moves.Insert(i, legalMove);
+                            i++;
+                        }
+
+                    }
+                    if (x + 1 < board.GetLength(1) && y + 1 < board.GetLength(0))//czy nie wychodzimy poza tablice
+                    {
+                        if (board[y + 1, x + 1] == 0)//sprawdzam, czy pole na ukos w prawo jest wolne
+                        {
+                            Tuple<int, int> legalMove = new Tuple<int, int>(y + 1, x + 1);
+                            moves.Insert(i, legalMove);
+                            i++;
+                        }
+                    }
+                }
             }
             else if (board[y, x] == 4)
             {
                 //obsluga ruchow czarnej damki
+                if (beatingAvaliable(pieceClicked, board, 1))
+                {
+                    //beatingCounter = 1;
+                    beatings.Clear();
+                    maxBeatings = 0;
+                    getBeatingsV2(pieceClicked, board, 1, 0, pieceClicked, pieceClicked);
+                    moves = beatings;
+
+                    Console.WriteLine(maxBeatings);
+                }
+                else
+                {
+                    if (x - 1 >= 0 && y - 1 >= 0)//czy nie wychodzimy poza tablice
+                    {
+                        if (board[y - 1, x - 1] == 0)//sprawdzam, czy pole na ukos w lewo jest wolne
+                        {
+                            Tuple<int, int> legalMove = new Tuple<int, int>(y - 1, x - 1);
+                            moves.Insert(i, legalMove);
+                            i++;
+                        }
+
+                    }
+                    if (x + 1 < board.GetLength(1) && y - 1 >= 0)//czy nie wychodzimy poza tablice
+                    {
+                        if (board[y - 1, x + 1] == 0)//sprawdzam, czy pole na ukos w prawo jest wolne
+                        {
+                            Tuple<int, int> legalMove = new Tuple<int, int>(y - 1, x + 1);
+                            moves.Insert(i, legalMove);
+                            i++;
+                        }
+                    }
+                    if (x - 1 >= 0 && y + 1 < board.GetLength(0))//czy nie wychodzimy poza tablice
+                    {
+                        if (board[y + 1, x - 1] == 0)//sprawdzam, czy pole na ukos w lewo jest wolne
+                        {
+                            Tuple<int, int> legalMove = new Tuple<int, int>(y + 1, x - 1);
+                            moves.Insert(i, legalMove);
+                            i++;
+                        }
+
+                    }
+                    if (x + 1 < board.GetLength(1) && y + 1 < board.GetLength(0))//czy nie wychodzimy poza tablice
+                    {
+                        if (board[y + 1, x + 1] == 0)//sprawdzam, czy pole na ukos w prawo jest wolne
+                        {
+                            Tuple<int, int> legalMove = new Tuple<int, int>(y + 1, x + 1);
+                            moves.Insert(i, legalMove);
+                            i++;
+                        }
+                    }
+                }
             }
             //System.Console.WriteLine("Possible moves: ");
             foreach (var move in moves)
@@ -443,6 +650,23 @@ namespace Chekkers
                 Console.WriteLine(move);
             }
             return moves;
+        }
+
+        public static Tuple<int, int> countPieces(int[,] board, int n)
+        {
+            int white = 0, black = 0;
+            for(int i = 0; i<n; i++)
+            {
+                for(int j = 0; j < n; j++)
+                {
+                    if (board[i, j] == 1 || board[i,j]==3)
+                        white++;
+                    if (board[i, j] == 2 || board[i,j]==4)
+                        black++;
+
+                }
+            }
+            return new Tuple<int, int>(white, black);
         }
         public static void Main()
         {
@@ -458,8 +682,8 @@ namespace Chekkers
             prepareBoard(board);
             gameInProgress = false ;
             int playerColor = 1;//1 - biali, 2 - czarni
-            int whitePieces = 12;
-            int blackPieces = 12;
+            Tuple<int, int> pieces = new Tuple<int,int> (12,12);//item1 - white, item2 - black
+            
 
             Raylib.InitWindow(cellSize*board.GetLength(1)+200, cellSize * board.GetLength(0), "Chekkers");
             Raylib.SetTargetFPS(60);
@@ -470,16 +694,16 @@ namespace Chekkers
                 mousePosition = Raylib.GetMousePosition();
                 Raylib.BeginDrawing();
                 Raylib.ClearBackground(Color.BLUE);
-                if (blackPieces == 0 || whitePieces == 0)
+                if (pieces.Item1 == 0 || pieces.Item2 == 0)
                     gameInProgress = false;
                 if (!gameInProgress)
                 {
-                    if (blackPieces == 0)
+                    if (pieces.Item2 == 0)
                     {
                         Raylib.DrawText("WHITE WON! ", 0, 100, 20, Color.WHITE);
                         
                     }
-                    if (whitePieces == 0)
+                    if (pieces.Item1 == 0)
                     {
                         Raylib.DrawText("BLACK WON! ", 0, 100, 20, Color.BLACK);
                         
@@ -488,7 +712,7 @@ namespace Chekkers
                     if (Raylib.IsKeyPressed(KeyboardKey.KEY_ENTER))
                     {
                         gameInProgress = true;
-                        whitePieces = 12; blackPieces = 12;
+                        pieces = new Tuple<int, int>(12, 12);
                         prepareBoard(board);
                         playerColor = 1;
                         turn = true;
@@ -504,13 +728,21 @@ namespace Chekkers
                         Raylib.DrawText("Black turn", Raylib.GetScreenWidth() - 150, 0, 20, Color.BLACK);
                     if (gameInProgress)
                     {
+                        /*optimalPieces = getOptimalPieces(board);
+                         * napisac funkcje zwracajaca liste pionow z optymalnymi ruchami 
+                         * (pusta - wszystkie piony bez mozliwosci ruchu(0 ruchow) - wygrywa druzyna ktorej nie jest dana tura!)
+                         * funkcja powinna uzywac juz napisanych funkcji (wyszukanie w petli wszystkich pionow druzyny ktorej jest tura
+                         * i dla kazdego piona zwrocenie ilosci ruchow
+                         * wykorzystac liste optimalPieces do zakreślenia w ramke pieces z optymalna iloscia ruchow
+                        
+                         */
                         if(pieceChoosen)
                         {
                             drawLegalMoves(moves, board, cellSize);
                             
                         }
                             
-                        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT))
+                        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)&&mousePosition.X<cellSize*8)
                         {
                             cellClicked = getCell(mousePosition, cellSize);
                             System.Console.WriteLine("Cell clicked: " + cellClicked.Item1 + " " + cellClicked.Item2);
@@ -526,13 +758,11 @@ namespace Chekkers
                                         searchPieces(pieceClicked, cellClicked, pieceClicked, board, 2);
 
                                     //removePiece(pieceClicked, cellClicked, board);
-                                    if (turn)
-                                        blackPieces-=maxBeatings;
-                                    else
-                                        whitePieces-=maxBeatings;
-                                    System.Console.WriteLine("pieces remaining: W" + whitePieces + " B" + blackPieces);
+                                    pieces = countPieces(board, 8);
+                                    System.Console.WriteLine("pieces remaining: W" + pieces.Item1 + " B" + pieces.Item2);
                                 }
                                 movePiece(pieceClicked.Item1, pieceClicked.Item2, cellClicked.Item1, cellClicked.Item2, board);
+                                promotion(cellClicked, board);
                                 turn = !turn;//zmiana tury
                                 if (playerColor == 1)
                                     playerColor = 2;
@@ -541,14 +771,14 @@ namespace Chekkers
 
                                 
                             }
-                            if (board[cellClicked.Item1, cellClicked.Item2] == playerColor)
+                            if (board[cellClicked.Item1, cellClicked.Item2] == playerColor || board[cellClicked.Item1, cellClicked.Item2] == playerColor+2)
                             {
                                 pieceClicked = cellClicked;
                                 pieceChoosen = true;
                                 //if dany pionek in listaPionkowZOptymalnymiBiciami or listaPionkowZOptymalnymiBiciami is empty, w przeciwnym wypadku nie rysuj ruchow (mimo ze są) bo nie są legalne (nie są optymalne)
                                 moves = getLegalMoves(pieceClicked, board);
                                 drawLegalMoves(moves, board, cellSize);
-                                
+                                //drawPieces(board, cellSize);
                             }
                         }
 
@@ -556,19 +786,30 @@ namespace Chekkers
                     /* Warunki konca:
                      * - jesli gracz A nie ma ruchu - wygrywa gracz B
                      * - jesli gracz B nie ma pionkow - wygrywa gracz A
-                     * - jesli nastapiło 15 ruchów damką ze strony jednego z graczy - remis
+                     * - jesli nastapiło 15 ruchów damką ze strony jednego z graczy bez ruszenia piona- remis
                      * - jesli 3x pojawilo sie to samo ustawienie na planszy - remis -> zastanowic sie czy wprowadzac - ciezkie do zaimplementowania
                      * 
-                     * TODO:
-                     * - wielokrotne bicia
-                     * - optymalne ruchy (nie dawać zrobić ruchu jesli jest lepszy)
+                     * TODO (znane problemy):
+                     * - zapetlone bicia - wykonuje ruch ale nie usuwa z planszy bitych pionow przy zapetlonym biciu
+                     * - pozwolić tylko na optymalne ruchy
                      * - dodatkowy warunek konca - brak ruchow 
-                     * - wypisywanie kto wygral i dlaczego (+ w tle drukowanie planszy zeby bylo wiadomo)
+                     * - wypisywanie kto wygral i dlaczego (+ w tle drukowanie planszy zeby bylo wiadomo co sie zadziało)
+                     * - wypisywanie zasad po prawej (tylko optymalne ruchy, dama porusza sie na dowolna odleglosc, ruchy tylko do przodu, bicia do tylu dozwolone)
                      * - AI
                      * - OOP 
                      * - MENU
                      * - WYBÓR OPCJI GRY
+                     * 
+                     * - poprawki wizualne - przy zapetlonym biciu (nie wyswietla pionka tylko zielone pole), dodac zolte pola przy wielokrotnych biciach (aby bylo widac ktoredy bijemy)
                      */
+                    /*optimalPieces = getOptimalPieces(board);
+                         * napisac funkcje zwracajaca liste pionow z optymalnymi ruchami 
+                         * (pusta - wszystkie piony bez mozliwosci ruchu(0 ruchow) - wygrywa druzyna ktorej nie jest dana tura!)
+                         * funkcja powinna uzywac juz napisanych funkcji (wyszukanie w petli wszystkich pionow druzyny ktorej jest tura
+                         * i dla kazdego piona zwrocenie ilosci ruchow
+                         * wykorzystac liste optimalPieces do zakreślenia w ramke pieces z optymalna iloscia ruchow
+                        
+                         */
                 }
                 Raylib.EndDrawing();
             }
