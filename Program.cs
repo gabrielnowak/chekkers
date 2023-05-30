@@ -786,9 +786,7 @@ namespace Chekkers
                     /* Warunki konca:
                      * - jesli gracz A nie ma ruchu - wygrywa gracz B
                      * - jesli gracz B nie ma pionkow - wygrywa gracz A
-                     * - jesli nastapiło 15 ruchów damką ze strony jednego z graczy bez ruszenia piona- remis
-                     * - jesli 3x pojawilo sie to samo ustawienie na planszy - remis -> zastanowic sie czy wprowadzac - ciezkie do zaimplementowania
-                     * 
+                  
                      * TODO (znane problemy):
                      * - zapetlone bicia - wykonuje ruch ale nie usuwa z planszy bitych pionow przy zapetlonym biciu
                      * - pozwolić tylko na optymalne ruchy
