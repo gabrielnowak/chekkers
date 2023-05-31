@@ -7,6 +7,7 @@ using System.ComponentModel.Design;
 using System.Drawing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using Color = Raylib_cs.Color;
 
 namespace Chekkers
@@ -18,16 +19,22 @@ namespace Chekkers
     }
     class AI
     {
-        public static int difficulty;
-        public static players player;
-        public static int getStrength(int[,] board, players player)//funkcja zwracajaca sile pojedynczego ruchu
+        public static int Difficulty;
+        public static int[,] optimalBoard;
+        public static players Player;
+        public AI(int difficulty, players player)
+        {
+            Difficulty = difficulty;
+            Player = player;
+        }
+        public static int getStrength(int[,] gameBoard, players player)//funkcja zwracajaca sile pojedynczego ruchu
         {
             /*
              * ZASADY LICZENIA SIŁY:
-             * PION - 1 PKT
+             * PION - 1 PKT OK
              * PION W STRUKTURZE (PRZYLEPIONY DO INNEGO PIONA TEGO SAMEGO KOLORU) - 1 PKT
-             * PION W 4 I 5 KOLUMNIE/WIERSZU - 2 PKT
-             * PION W 3 I 6 KOLUMNIE/WIERSZU - 1 PKT
+             * PION W 4 I 5 KOLUMNIE/WIERSZU - 2 PKT OK
+             * PION W 3 I 6 KOLUMNIE/WIERSZU - 1 PKT OK
              * PION NARAŻONY NA BICIE - -1PKT
              */
             int whiteStrength = 0;
@@ -35,11 +42,11 @@ namespace Chekkers
             if(player == players.WHITE)
             {
                 //liczenie pionów
-                for(int i = 0; i < board.GetLength(0);i++)
+                for(int i = 0; i < gameBoard.GetLength(0);i++)
                 {
-                    for (int j = 0; j < board.GetLength(1); j++)
+                    for (int j = 0; j < gameBoard.GetLength(1); j++)
                     {
-                        if (board[i, j] == 1)
+                        if (gameBoard[i, j] == 1)
                         {
                             whiteStrength++;
                             if (i == 3 || i == 4 || j == 3 || j == 4)//doliczanie za centralne miejsca
@@ -47,7 +54,7 @@ namespace Chekkers
                             else if (i == 2 || i == 5 || j == 2 || j == 5)
                                 whiteStrength++;
                         }
-                        else if (board[i, j] == 2)
+                        else if (gameBoard[i, j] == 2)
                         {
                             blackStrength++;
                             if (i == 3 || i == 4 || j == 3 || j == 4)//doliczanie za centralne miejsca
@@ -63,16 +70,243 @@ namespace Chekkers
             {
                 return blackStrength - whiteStrength;
             }
-            
+
+        }
+        public static void simulateEveryMove(int[,] board)
+        {
+            optimalBoard = new int[8, 8];
+            int maxStrength = int.MinValue;
+            int[,] temporaryBoard = new int[8,8];
+            List<Tuple<int, int>> moves = new List<Tuple<int, int>>();
+
+            for (int i = 0; i < board.GetLength(0); i++)
+            {
+                for (int j = 0; j < board.GetLength(1); j++)
+                {
+                    if (Player == players.BLACK)
+                    {
+                        if (board[i,j] == 2 || board[i, j] == 4)//symuluj ruchy czarnym pionem
+                        {
+                            Tuple<int, int> move = new Tuple<int,int>(i, j);
+                            moves = GameLogic.getLegalMoves(move, board);
+                            foreach(Tuple<int,int> elem in moves)
+                            {
+                                Array.Copy(board, temporaryBoard, board.Length);
+                                //wykonaj ruch na temporaryBoard
+                                GameLogic.movePiece(move.Item1, move.Item2, elem.Item1, elem.Item2, temporaryBoard);
+                                GameLogic.promotion(elem, temporaryBoard);
+
+                                int strength = getStrength(temporaryBoard, players.WHITE);
+                                if (strength > maxStrength)
+                                {
+                                    maxStrength = strength;
+                                    Array.Copy(temporaryBoard, optimalBoard, temporaryBoard.Length);
+                                }
+                                
+                            }
+                        }
+                    }
+                }
+            }
+            Array.Copy(temporaryBoard, board, temporaryBoard.Length);
         }
     }
-    static class Program
+
+    class GameLogic
     {
         static List<Tuple<int, int>> beatings = new List<Tuple<int, int>>();//przechowuje liste bic dla konkretnego pionka
         static List<Tuple<int, int>> piecesToRemove = new List<Tuple<int, int>>();//dla konkretnego pola zwracana jest lista pol do wykasowania przy biciu na to pole (wszystkie pionki napotkane po drodze)
-        public static int maxBeatings=0;
+        public static int maxBeatings = 0;
+        public int[,] board;
 
         //public static int beatingCounter;
+        /* public GameLogic(int[,] Board)
+         {
+             Array.Copy(Board, board, board.Length);
+         }
+        */
+        public static int positionPoints(int i, int j, players opponent)
+        {
+            int points = 0;
+            if(opponent == players.WHITE)
+            {
+                if (i >= 3)
+                    points += 2;
+                if (i >= 5)
+                    points += 2;
+                if (j == 3 || j == 4)
+                    points += 2;
+                if (j == 2 || j == 5)
+                    points++;
+            }
+            else
+            {
+                if (i <= 4)
+                    points += 2;
+                if (i <= 6)
+                    points += 2;
+                if (j == 3 || j == 4)
+                    points += 2;
+                if (j == 2 || j == 5)
+                    points++;
+            }
+            return points;
+        }
+        public static bool isInDanger(int[,] gameBoard, int i, int j, players opponent)//opponent to przeciwnik AI
+        {
+            if (opponent == players.WHITE)
+            {
+                if (i + 1 < gameBoard.GetLength(1) && j + 1 < gameBoard.GetLength(1) && i - 1 >= 0 && j - 1 >= 0 && gameBoard[i + 1, j + 1] == 0 && (gameBoard[i - 1, j - 1] == 1 || gameBoard[i - 1, j - 1] == 3))
+                    return true;
+                else if (i + 1 < gameBoard.GetLength(1) && j + 1 < gameBoard.GetLength(1) && i - 1 >= 0 && j - 1 >= 0 && gameBoard[i - 1, j - 1] == 0 && (gameBoard[i + 1, j + 1] == 1 || gameBoard[i + 1, j + 1] == 3))
+                    return true;
+                else if (i + 1 < gameBoard.GetLength(1) && j + 1 < gameBoard.GetLength(1) && i - 1 >= 0 && j - 1 >= 0 && gameBoard[i - 1, j + 1] == 0 && (gameBoard[i + 1, j - 1] == 1 || gameBoard[i + 1, j - 1] == 3))
+                    return true;
+                else if (i + 1 < gameBoard.GetLength(1) && j + 1 < gameBoard.GetLength(1) && i - 1 >= 0 && j - 1 >= 0 && gameBoard[i + 1, j - 1] == 0 && (gameBoard[i - 1, j + 1] == 1 || gameBoard[i - 1, j + 1] == 3))
+                    return true;
+                else
+                    return false;
+            }
+            else
+            {
+                return true;
+            }
+                
+        }
+        public static bool isAlone(int[,] gameBoard, int i, int j)
+        {
+            if(i+1 < gameBoard.GetLength(1) && j + 1 < gameBoard.GetLength(1) && gameBoard[i+1,j+1]!=0)
+                return false;
+            if (i + 1 < gameBoard.GetLength(1) && j - 1 >= 0 && gameBoard[i + 1, j - 1] != 0)
+                return false;
+            if (i - 1 >= 0 && j - 1 >= 0 && gameBoard[i - 1, j - 1] != 0)
+                return false;
+            if (i - 1 >= 0 && j + 1 < gameBoard.GetLength(1) && gameBoard[i - 1, j + 1] != 0)
+                return false;
+            return true;
+        }
+        public static int getStrength(int[,] gameBoard, players opponent)//funkcja zwracajaca sile pojedynczego ruchu, opponent oznacza KTO JEST PRZECIWNIKIEM SZTUCZNEJ INTELIGENCJI!!!
+        {
+            /*
+             * ZASADY LICZENIA SIŁY:
+             * PION - 10 PKT OK
+             * PION W STRUKTURZE (PRZYLEPIONY DO INNEGO PIONA TEGO SAMEGO KOLORU) - 5 PKT
+             * PION W 4 I 5 KOLUMNIE/WIERSZU - 2 PKT OK
+             * PION W 3 I 6 KOLUMNIE/WIERSZU - 1 PKT OK
+             * PION NARAŻONY NA BICIE - -6PKT
+             * DAMA - 20 PKT
+             */
+            int whiteStrength = 0;
+            int blackStrength = 0;
+            if (opponent == players.WHITE)
+            {
+                //liczenie pionów
+                for (int i = 0; i < gameBoard.GetLength(0); i++)
+                {
+                    for (int j = 0; j < gameBoard.GetLength(1); j++)
+                    {
+                        //BIAŁE
+                        if (gameBoard[i, j] == 1)//bialy pion
+                        {
+                            whiteStrength+=10;
+                            if (isAlone(gameBoard, i, j))
+                                whiteStrength -= 5;
+                            blackStrength += positionPoints(i, j, players.BLACK);
+
+
+                        }
+                        else if (gameBoard[i, j] == 3)//biala dama
+                        {
+                            whiteStrength += 20;
+                            if (isAlone(gameBoard, i, j))
+                                whiteStrength -= 5;
+                            blackStrength += positionPoints(i, j, players.BLACK);
+
+                        }
+                        //CZARNE
+                        else if (gameBoard[i, j] == 2)//czarny pion
+                        {
+                            blackStrength+=10;
+                            if (isAlone(gameBoard, i, j))
+                                blackStrength -= 5;
+                            if (isInDanger(gameBoard, i, j, players.WHITE))
+                                blackStrength -= 8;
+                            blackStrength += positionPoints(i, j, players.WHITE);
+                        }
+                        
+                        else if (gameBoard[i, j] == 4)//czarna dama
+                        {
+                            blackStrength += 20;
+                            if (isAlone(gameBoard, i, j))
+                                blackStrength -= 5;
+                            if (isInDanger(gameBoard, i, j, players.WHITE))
+                                blackStrength -= 15;
+                            blackStrength += positionPoints(i, j, players.WHITE);
+
+                        }
+                    }
+                }
+                return blackStrength - whiteStrength;
+            }
+            else
+            {
+                return whiteStrength - blackStrength;
+            }
+
+        }
+        public static void simulateEveryMove(int[,] board, Tuple <int,int> pieces, int playerColor)
+        {
+            int[,] optimalBoard = new int[8, 8];
+            int maxStrength = int.MinValue;
+            int[,] temporaryBoard = new int[8, 8];
+            int strength=0;
+            List<Tuple<int, int>> moves = new List<Tuple<int, int>>();
+
+            for (int i = 0; i < board.GetLength(0); i++)
+            {
+                for (int j = 0; j < board.GetLength(1); j++)
+                {
+                    
+                        if (board[i, j] == 2 || board[i, j] == 4)//symuluj ruchy czarnym pionem
+                        {
+                            Tuple<int, int> move = new Tuple<int, int>(i, j);
+                            moves = GameLogic.getLegalMoves(move, board);
+                            foreach (Tuple<int, int> elem in moves)
+                            {
+                                Array.Copy(board, temporaryBoard, board.Length);
+                            //wykonaj ruch na temporaryBoard
+                                if (beatings.Contains(elem)) //mamy bicie - DO POPRAWY - nie uwzględnia wielokrotnych bić! napisać funkcję WRÓĆ (szukającą droge od cell clicked do piece clicked i zerującą wszystkie napotkane pionki po drodze)
+                                {
+                                    piecesToRemove.Clear();
+                                    if (playerColor == 2)
+                                        searchPieces(move, elem, move, temporaryBoard, 1);
+                                    if (playerColor == 1)
+                                        searchPieces(move, elem, move, temporaryBoard, 2);
+
+                                    //removePiece(pieceClicked, cellClicked, board);
+                                    pieces = countPieces(temporaryBoard, 8);
+                                    //System.Console.WriteLine("pieces remaining: W" + pieces.Item1 + " B" + pieces.Item2);
+                                }
+                                movePiece(move.Item1, move.Item2, elem.Item1, elem.Item2, temporaryBoard);
+                                promotion(elem, temporaryBoard);
+
+                                strength = getStrength(temporaryBoard, players.WHITE);
+                                Console.WriteLine("actual strength: " + strength);
+                            if (strength >= maxStrength)
+                                {
+                                    maxStrength = strength;
+                                    Array.Copy(temporaryBoard, optimalBoard, temporaryBoard.Length);
+                                }
+
+                            }
+                        }
+                    
+                }
+            }
+            Array.Copy(optimalBoard, board, temporaryBoard.Length);
+            Console.WriteLine("STRENGTH: " + strength);
+
+        }
         public static void prepareBoard(int[,] board)
         {
             //0 - pusta plansza , 1 - pion bialy, 2 - pion czarny , 3 - damka biala , 4 - damka czarna
@@ -102,12 +336,12 @@ namespace Chekkers
             {
                 for (int j = 0; j < board.GetLength(1); j++)
                 {
-                    if(i%2 == 0)
+                    if (i % 2 == 0)
                     {
-                        if(j%2==0)
-                            Raylib.DrawRectangle(j * cellSize, i * cellSize, cellSize,cellSize, Color.GRAY);
+                        if (j % 2 == 0)
+                            Raylib.DrawRectangle(j * cellSize, i * cellSize, cellSize, cellSize, Color.GRAY);
                         else
-                            Raylib.DrawRectangle(j * cellSize, i * cellSize, cellSize,cellSize, Color.BROWN);
+                            Raylib.DrawRectangle(j * cellSize, i * cellSize, cellSize, cellSize, Color.BROWN);
                     }
                     if (i % 2 == 1)
                     {
@@ -140,60 +374,60 @@ namespace Chekkers
                         Raylib.DrawCircle(j * cellSize + cellSize / 2, i * cellSize + cellSize / 2, cellSize / 2, Color.GOLD);
                         Raylib.DrawCircle(j * cellSize + cellSize / 2, i * cellSize + cellSize / 2, cellSize / 3, Color.BLACK);
                     }
-                    
-                        
+
+
 
                 }
             }
         }
-        public static Tuple<int,int> getCell(Vector2 mousePosition, int cellSize)
+        public static Tuple<int, int> getCell(Vector2 mousePosition, int cellSize)
         {
-            return Tuple.Create((int)mousePosition.Y/cellSize, (int)mousePosition.X/cellSize);
+            return Tuple.Create((int)mousePosition.Y / cellSize, (int)mousePosition.X / cellSize);
         }
 
         public static void searchPieces(Tuple<int, int> start, Tuple<int, int> destination, Tuple<int, int> prevPos, int[,] board, int opponent)
         {
-            
+
             int x = start.Item2;
             int y = start.Item1;
-            Console.WriteLine("tttt: " + x + " " + y + " | " + destination.Item2 + " " + destination.Item1+" | "+ piecesToRemove.Count +" "+maxBeatings);
+            Console.WriteLine("tttt: " + x + " " + y + " | " + destination.Item2 + " " + destination.Item1 + " | " + piecesToRemove.Count + " " + maxBeatings);
             if (x == destination.Item2 && y == destination.Item1 && piecesToRemove.Count == maxBeatings)
             {
-                Console.WriteLine("tescik  "+piecesToRemove.Count);
+                Console.WriteLine("tescik  " + piecesToRemove.Count);
                 foreach (var piece in piecesToRemove)
                 {
                     board[piece.Item1, piece.Item2] = 0;
                 }
             }
-            if (x - 2 >= 0 && y - 2 >= 0 && board[y - 2, x - 2] == 0 && opponent == board[y - 1, x - 1] && (prevPos.Item2 != x - 2 || prevPos.Item1 != y - 2))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
+            if (x - 2 >= 0 && y - 2 >= 0 && board[y - 2, x - 2] == 0 && (opponent == board[y - 1, x - 1] || opponent+2 == board[y - 1, x - 1]) && (prevPos.Item2 != x - 2 || prevPos.Item1 != y - 2))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
             {
                 Tuple<int, int> pieceToRemove = new Tuple<int, int>(y - 1, x - 1);
                 piecesToRemove.Add(pieceToRemove);
                 Console.WriteLine("xxxxxxxxxxxxxxxx1");
                 Tuple<int, int> nextMove = new Tuple<int, int>(y - 2, x - 2);
-                Console.WriteLine(nextMove.Item2+" "+nextMove.Item1);
+                Console.WriteLine(nextMove.Item2 + " " + nextMove.Item1);
                 searchPieces(nextMove, destination, start, board, opponent);
                 piecesToRemove.RemoveAt(piecesToRemove.Count - 1);
             }
-            if (x - 2 >= 0 && y + 2 < board.GetLength(0) && board[y + 2, x - 2] == 0  && opponent == board[y + 1, x - 1] && (prevPos.Item2 != x - 2 || prevPos.Item1 != y + 2))
+            if (x - 2 >= 0 && y + 2 < board.GetLength(0) && board[y + 2, x - 2] == 0 && (opponent == board[y + 1, x - 1] || opponent+2 == board[y + 1, x - 1]) && (prevPos.Item2 != x - 2 || prevPos.Item1 != y + 2))
             {
-                
+
                 Tuple<int, int> pieceToRemove = new Tuple<int, int>(y + 1, x - 1);
                 piecesToRemove.Add(pieceToRemove);
                 Console.WriteLine("xxxxxxxxxxxxxxxx2");
-                Tuple<int, int> nextMove = new Tuple<int, int>(y +2 , x - 2);
+                Tuple<int, int> nextMove = new Tuple<int, int>(y + 2, x - 2);
                 searchPieces(nextMove, destination, start, board, opponent);
                 piecesToRemove.RemoveAt(piecesToRemove.Count - 1);
             }
-            if (x + 2 < board.GetLength(0) && y - 2 >= 0 && board[y - 2, x + 2] == 0 && opponent == board[y - 1, x + 1] && (prevPos.Item2 != x + 2 || prevPos.Item1 != y - 2))
+            if (x + 2 < board.GetLength(0) && y - 2 >= 0 && board[y - 2, x + 2] == 0 && (opponent == board[y - 1, x + 1] || opponent+2 == board[y - 1, x + 1]) && (prevPos.Item2 != x + 2 || prevPos.Item1 != y - 2))
             {
                 Tuple<int, int> pieceToRemove = new Tuple<int, int>(y - 1, x + 1);
                 piecesToRemove.Add(pieceToRemove);
                 Console.WriteLine("xxxxxxxxxxxxxxxx3");
-                Tuple<int, int> nextMove = new Tuple<int, int>(y - 2 , x + 2);
+                Tuple<int, int> nextMove = new Tuple<int, int>(y - 2, x + 2);
                 searchPieces(nextMove, destination, start, board, opponent);
             }
-            if (x + 2 < board.GetLength(0) && y + 2 < board.GetLength(1) && board[y + 2, x + 2] == 0 && opponent == board[y + 1, x + 1] && (prevPos.Item2 != x + 2 || prevPos.Item1 != y + 2))
+            if (x + 2 < board.GetLength(0) && y + 2 < board.GetLength(1) && board[y + 2, x + 2] == 0 && (opponent == board[y + 1, x + 1] || opponent+2 == board[y + 1, x + 1]) && (prevPos.Item2 != x + 2 || prevPos.Item1 != y + 2))
             {
                 Tuple<int, int> pieceToRemove = new Tuple<int, int>(y + 1, x + 1);
                 piecesToRemove.Add(pieceToRemove);
@@ -204,22 +438,22 @@ namespace Chekkers
             }
 
         }
-         public static bool beatingAvaliable(Tuple<int, int> pieceClicked, int [,] board, int opponent)
+        public static bool beatingAvaliable(Tuple<int, int> pieceClicked, int[,] board, int opponent)
         {
             int x = pieceClicked.Item2;
             int y = pieceClicked.Item1;
             if (x - 2 >= 0 && y - 2 >= 0 && board[y - 2, x - 2] == 0 && (opponent == board[y - 1, x - 1] || opponent + 2 == board[y - 1, x - 1]))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
                 return true;
-            if (x - 2 >=0 && y + 2 < board.GetLength(0) && board[y + 2, x - 2] == 0 && (opponent == board[y + 1, x - 1] || opponent + 2 == board[y + 1, x - 1]))
-                    return true;
+            if (x - 2 >= 0 && y + 2 < board.GetLength(0) && board[y + 2, x - 2] == 0 && (opponent == board[y + 1, x - 1] || opponent + 2 == board[y + 1, x - 1]))
+                return true;
             if (x + 2 < board.GetLength(0) && y - 2 >= 0 && board[y - 2, x + 2] == 0 && (opponent == board[y - 1, x + 1] || opponent + 2 == board[y - 1, x + 1]))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
                 return true;
             if (x + 2 < board.GetLength(1) && y + 2 < board.GetLength(0) && board[y + 2, x + 2] == 0 && (opponent == board[y + 1, x + 1] || opponent + 2 == board[y + 1, x + 1]))
-                    return true;
+                return true;
 
             return false;
         }
-        public static void getBeatingsV2(Tuple<int, int> pieceClicked, int[,] board, int opponent, int length, Tuple<int, int> prevPos, Tuple<int,int> startPos)
+        public static void getBeatingsV2(Tuple<int, int> pieceClicked, int[,] board, int opponent, int length, Tuple<int, int> prevPos, Tuple<int, int> startPos)
         {
             int x = pieceClicked.Item2;
             int y = pieceClicked.Item1;
@@ -230,7 +464,7 @@ namespace Chekkers
             }
             else
             {
-                if ((x - 2 >= 0 && y - 2 >= 0 && board[y - 2, x - 2] == 0 && opponent == board[y - 1, x - 1] && (prevPos.Item2 != x - 2 || prevPos.Item1 != y - 2)) || (x - 2 >= 0 && y - 2 >= 0 && startPos.Item1 == y - 2 && startPos.Item2 == x - 2 && length > 2 && opponent == board[y - 1, x - 1] && (prevPos.Item2 != x - 2 || prevPos.Item1 != y - 2)))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
+                if ((x - 2 >= 0 && y - 2 >= 0 && board[y - 2, x - 2] == 0 && (opponent == board[y - 1, x - 1] || opponent+2 == board[y - 1, x - 1]) && (prevPos.Item2 != x - 2 || prevPos.Item1 != y - 2)) || (x - 2 >= 0 && y - 2 >= 0 && startPos.Item1 == y - 2 && startPos.Item2 == x - 2 && length > 2 && (opponent == board[y - 1, x - 1] || opponent+2 == board[y - 1, x - 1]) && (prevPos.Item2 != x - 2 || prevPos.Item1 != y - 2)))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
                 {
                     Tuple<int, int> legalBeating = new Tuple<int, int>(y - 2, x - 2);
                     Tuple<int, int> pieceToRemove = new Tuple<int, int>(y - 1, x - 1);
@@ -257,7 +491,7 @@ namespace Chekkers
                     }
                 }
 
-                if ((x - 2 >= 0 && y + 2 < board.GetLength(0) && board[y + 2, x - 2] == 0 && opponent == board[y + 1, x - 1] && (prevPos.Item2 != x - 2 || prevPos.Item1 != y + 2)) || (x - 2 >= 0 && y + 2 >= 0 && startPos.Item1 == y + 2 && startPos.Item2 == x - 2 && length > 2 && opponent == board[y + 1, x - 1] && (prevPos.Item2 != x - 2 || prevPos.Item1 != y + 2)))
+                if ((x - 2 >= 0 && y + 2 < board.GetLength(0) && board[y + 2, x - 2] == 0 && (opponent == board[y + 1, x - 1] || opponent+2 == board[y + 1, x - 1]) && (prevPos.Item2 != x - 2 || prevPos.Item1 != y + 2)) || (x - 2 >= 0 && y + 2 >= 0 && startPos.Item1 == y + 2 && startPos.Item2 == x - 2 && length > 2 && (opponent == board[y + 1, x - 1] && opponent+2 == board[y + 1, x - 1]) && (prevPos.Item2 != x - 2 || prevPos.Item1 != y + 2)))
                 {
                     Tuple<int, int> legalBeating = new Tuple<int, int>(y + 2, x - 2);
 
@@ -279,7 +513,7 @@ namespace Chekkers
                         getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked, startPos);
                     }
                 }
-                if ((x + 2 < board.GetLength(0) && y - 2 >= 0 && board[y - 2, x + 2] == 0 && opponent == board[y - 1, x + 1] && (prevPos.Item2 != x + 2 || prevPos.Item1 != y - 2)) || (x + 2 >= 0 && y - 2 >= 0 && startPos.Item1 == y - 2 && startPos.Item2 == x + 2 && length > 2 && opponent == board[y - 1, x + 1] && (prevPos.Item2 != x + 2 || prevPos.Item1 != y - 2)))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
+                if ((x + 2 < board.GetLength(0) && y - 2 >= 0 && board[y - 2, x + 2] == 0 && (opponent == board[y - 1, x + 1] || opponent+2 == board[y - 1, x + 1]) && (prevPos.Item2 != x + 2 || prevPos.Item1 != y - 2)) || (x + 2 >= 0 && y - 2 >= 0 && startPos.Item1 == y - 2 && startPos.Item2 == x + 2 && length > 2 && (opponent == board[y - 1, x + 1] || opponent+2 == board[y - 1, x + 1]) && (prevPos.Item2 != x + 2 || prevPos.Item1 != y - 2)))//czy nie wychodzimy poza tablice !!!! BOARD != dziala dopoki nie ma damek na planszy!!
                 {
                     Tuple<int, int> legalBeating = new Tuple<int, int>(y - 2, x + 2);
                     if (length + 1 > maxBeatings)
@@ -300,7 +534,7 @@ namespace Chekkers
                         getBeatingsV2(legalBeating, board, opponent, length + 1, pieceClicked, startPos);
                     }
                 }
-                if ((x + 2 < board.GetLength(0) && y + 2 < board.GetLength(1) && board[y + 2, x + 2] == 0 && opponent == board[y + 1, x + 1] && (prevPos.Item2 != x + 2 || prevPos.Item1 != y + 2)) || (x + 2 >= 0 && y + 2 >= 0 && startPos.Item1 == y + 2 && startPos.Item2 == x + 2 && length > 2 && opponent == board[y + 1, x + 1] && (prevPos.Item2 != x + 2 || prevPos.Item1 != y + 2)))
+                if ((x + 2 < board.GetLength(0) && y + 2 < board.GetLength(1) && board[y + 2, x + 2] == 0 && (opponent == board[y + 1, x + 1] || opponent+2 == board[y + 1, x + 1]) && (prevPos.Item2 != x + 2 || prevPos.Item1 != y + 2)) || (x + 2 >= 0 && y + 2 >= 0 && startPos.Item1 == y + 2 && startPos.Item2 == x + 2 && length > 2 && (opponent == board[y + 1, x + 1] || opponent+2 == board[y + 1, x + 1]) && (prevPos.Item2 != x + 2 || prevPos.Item1 != y + 2)))
                 {
                     Tuple<int, int> legalBeating = new Tuple<int, int>(y + 2, x + 2);
                     if (length + 1 > maxBeatings)
@@ -351,7 +585,7 @@ namespace Chekkers
             }
             return beatings;
         }
-        public static void drawLegalMoves(List<Tuple<int, int>> moves ,  int[,] board,int cellSize)
+        public static void drawLegalMoves(List<Tuple<int, int>> moves, int[,] board, int cellSize)
         {
             //obsluga bicia
             foreach (var move in moves)
@@ -401,9 +635,9 @@ namespace Chekkers
 
             */
         }
-        public static void promotion (Tuple<int,int> position, int[,] board)
+        public static void promotion(Tuple<int, int> position, int[,] board)
         {
-            if(position.Item1 == 7 && board[position.Item1, position.Item2] == 2)//czarny na koncu planszy - promocja
+            if (position.Item1 == 7 && board[position.Item1, position.Item2] == 2)//czarny na koncu planszy - promocja
             {
                 board[position.Item1, position.Item2] = 4;
                 Console.WriteLine("PROMOTED!");
@@ -417,14 +651,14 @@ namespace Chekkers
             }
         }
         public static void movePiece(int y, int x, int yDestination, int xDestination, int[,] board)
-        { 
-            
-           
+        {
+
+
             //obsluga ruchu bialych
 
             System.Console.WriteLine("Destination: " + yDestination + " " + xDestination);
             if (board[y, x] == 1)
-            { 
+            {
                 board[y, x] = 0;
                 board[yDestination, xDestination] = 1;
             }
@@ -453,9 +687,9 @@ namespace Chekkers
         {
             board[(pieceClicked.Item1 + cellClicked.Item1) / 2, (pieceClicked.Item2 + cellClicked.Item2) / 2] = 0;
         }
-        public static List<Tuple<int,int>> getLegalMoves(Tuple<int,int>pieceClicked, int[,] board)
+        public static List<Tuple<int, int>> getLegalMoves(Tuple<int, int> pieceClicked, int[,] board)
         {
-            List <Tuple< int,int>> moves = new List<Tuple<int, int>>();
+            List<Tuple<int, int>> moves = new List<Tuple<int, int>>();
             int y = pieceClicked.Item1;
             int x = pieceClicked.Item2;
             int i = 0;
@@ -504,9 +738,9 @@ namespace Chekkers
                     //beatingCounter = 1;
                     beatings.Clear();
                     maxBeatings = 0;
-                    getBeatingsV2(pieceClicked, board, 1,0, pieceClicked, pieceClicked);
+                    getBeatingsV2(pieceClicked, board, 1, 0, pieceClicked, pieceClicked);
                     moves = beatings;
-                    
+
                     Console.WriteLine(maxBeatings);
                 }
                 //obsluga ruchow czarnego pionka
@@ -655,42 +889,45 @@ namespace Chekkers
         public static Tuple<int, int> countPieces(int[,] board, int n)
         {
             int white = 0, black = 0;
-            for(int i = 0; i<n; i++)
+            for (int i = 0; i < n; i++)
             {
-                for(int j = 0; j < n; j++)
+                for (int j = 0; j < n; j++)
                 {
-                    if (board[i, j] == 1 || board[i,j]==3)
+                    if (board[i, j] == 1 || board[i, j] == 3)
                         white++;
-                    if (board[i, j] == 2 || board[i,j]==4)
+                    if (board[i, j] == 2 || board[i, j] == 4)
                         black++;
 
                 }
             }
             return new Tuple<int, int>(white, black);
         }
-        public static void Main()
+        public void run()
         {
-            int[,] board = new int[8, 8];
+            board = new int[8, 8];
             int cellSize = 100;
             bool gameInProgress = false;
             bool turn = true;//true - tura bialych , false - tura czarnych
             Vector2 mousePosition = new Vector2(0, 0);
             Tuple<int, int> cellClicked;
-            Tuple<int, int> pieceClicked = new Tuple<int,int> (-1,-1);
-            List <Tuple<int,int>> moves = new List<Tuple<int, int>>();
+            Tuple<int, int> pieceClicked = new Tuple<int, int>(-1, -1);
+            List<Tuple<int, int>> moves = new List<Tuple<int, int>>();
             bool pieceChoosen = false;
             prepareBoard(board);
-            gameInProgress = false ;
+            gameInProgress = false;
             int playerColor = 1;//1 - biali, 2 - czarni
-            Tuple<int, int> pieces = new Tuple<int,int> (12,12);//item1 - white, item2 - black
-            
+            bool shouldSleep = false;
+            Tuple<int, int> pieces = new Tuple<int, int>(12, 12);//item1 - white, item2 - black
 
-            Raylib.InitWindow(cellSize*board.GetLength(1)+200, cellSize * board.GetLength(0), "Chekkers");
+            AI ai = new AI(1,players.BLACK); ;
+
+
+            Raylib.InitWindow(cellSize * board.GetLength(1) + 200, cellSize * board.GetLength(0), "Chekkers");
             Raylib.SetTargetFPS(60);
 
             while (!Raylib.WindowShouldClose())
             {
-                
+
                 mousePosition = Raylib.GetMousePosition();
                 Raylib.BeginDrawing();
                 Raylib.ClearBackground(Color.BLUE);
@@ -701,14 +938,14 @@ namespace Chekkers
                     if (pieces.Item2 == 0)
                     {
                         Raylib.DrawText("WHITE WON! ", 0, 100, 20, Color.WHITE);
-                        
+
                     }
                     if (pieces.Item1 == 0)
                     {
                         Raylib.DrawText("BLACK WON! ", 0, 100, 20, Color.BLACK);
-                        
+
                     }
-                    Raylib.DrawText("Press ENTER to Start New Game or ESC to Exit",0, 0, 20, Color.WHITE);
+                    Raylib.DrawText("Press ENTER to Start New Game or ESC to Exit", 0, 0, 20, Color.WHITE);
                     if (Raylib.IsKeyPressed(KeyboardKey.KEY_ENTER))
                     {
                         gameInProgress = true;
@@ -721,11 +958,20 @@ namespace Chekkers
                 else
                 {
                     drawBoard(board, cellSize);
+                    if(shouldSleep)
+                    {
+                        shouldSleep = false;
+                        Thread.Sleep(1000);
+                    }
                     drawPieces(board, cellSize);
                     if (turn)
                         Raylib.DrawText("White turn", Raylib.GetScreenWidth() - 150, 0, 20, Color.WHITE);
                     else
+                    {
                         Raylib.DrawText("Black turn", Raylib.GetScreenWidth() - 150, 0, 20, Color.BLACK);
+                        //Thread.Sleep(2000);
+                    }
+                        
                     if (gameInProgress)
                     {
                         /*optimalPieces = getOptimalPieces(board);
@@ -736,23 +982,23 @@ namespace Chekkers
                          * wykorzystac liste optimalPieces do zakreślenia w ramke pieces z optymalna iloscia ruchow
                         
                          */
-                        if(pieceChoosen)
+                        if (pieceChoosen && turn == true)
                         {
                             drawLegalMoves(moves, board, cellSize);
-                            
+
                         }
-                            
-                        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT)&&mousePosition.X<cellSize*8)
+
+                        if (Raylib.IsMouseButtonPressed(MouseButton.MOUSE_BUTTON_LEFT) && mousePosition.X < cellSize * 8 && turn == true)
                         {
                             cellClicked = getCell(mousePosition, cellSize);
                             System.Console.WriteLine("Cell clicked: " + cellClicked.Item1 + " " + cellClicked.Item2);
                             Raylib.DrawCircleV(mousePosition, cellSize / 2, Color.RED);
                             if (pieceChoosen && moves.Contains(cellClicked))//wykonaj ruch
                             {
-                                if(beatings.Contains(cellClicked)) //mamy bicie - DO POPRAWY - nie uwzględnia wielokrotnych bić! napisać funkcję WRÓĆ (szukającą droge od cell clicked do piece clicked i zerującą wszystkie napotkane pionki po drodze)
+                                if (beatings.Contains(cellClicked)) //mamy bicie - DO POPRAWY - nie uwzględnia wielokrotnych bić! napisać funkcję WRÓĆ (szukającą droge od cell clicked do piece clicked i zerującą wszystkie napotkane pionki po drodze)
                                 {
                                     piecesToRemove.Clear();
-                                    if(playerColor==2)
+                                    if (playerColor == 2)
                                         searchPieces(pieceClicked, cellClicked, pieceClicked, board, 1);
                                     if (playerColor == 1)
                                         searchPieces(pieceClicked, cellClicked, pieceClicked, board, 2);
@@ -768,10 +1014,10 @@ namespace Chekkers
                                     playerColor = 2;
                                 else playerColor = 1;
                                 pieceChoosen = false;
-
                                 
+
                             }
-                            if (board[cellClicked.Item1, cellClicked.Item2] == playerColor || board[cellClicked.Item1, cellClicked.Item2] == playerColor+2)
+                            if (board[cellClicked.Item1, cellClicked.Item2] == playerColor || board[cellClicked.Item1, cellClicked.Item2] == playerColor + 2)
                             {
                                 pieceClicked = cellClicked;
                                 pieceChoosen = true;
@@ -780,6 +1026,16 @@ namespace Chekkers
                                 drawLegalMoves(moves, board, cellSize);
                                 //drawPieces(board, cellSize);
                             }
+                        }
+                        else if(turn == false)
+                        {
+                            simulateEveryMove(board, pieces, playerColor);
+                            turn = true;
+                            if (playerColor == 1)
+                                playerColor = 2;
+                            else playerColor = 1;
+                            pieceChoosen = false;
+                            shouldSleep = true;
                         }
 
                     }
@@ -815,4 +1071,13 @@ namespace Chekkers
             Raylib.CloseWindow();
         }
     }
+
+    static class Program
+    {
+        public static void Main()
+        {
+            GameLogic gameLogic = new GameLogic();
+            gameLogic.run();
+        }
+    }  
 }
